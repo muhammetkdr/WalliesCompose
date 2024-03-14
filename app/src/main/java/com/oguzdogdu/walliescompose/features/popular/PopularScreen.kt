@@ -1,6 +1,5 @@
 package com.oguzdogdu.walliescompose.features.popular
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,10 +21,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -37,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
@@ -55,47 +61,95 @@ fun PopularScreenRoute(
     onBackClick: () -> Unit
 ) {
     val popularListState: LazyPagingItems<PopularImage> =
-        viewModel.getPopular.collectAsLazyPagingItems()
+        viewModel.getPopularPagingList.collectAsLazyPagingItems()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val popularScreenState by viewModel.getPopularScreenState.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE, lifecycleOwner = lifecycleOwner) {
         viewModel.handleUIEvent(PopularScreenEvent.FetchPopularData)
 
     }
-    Scaffold(modifier = modifier
-        .fillMaxSize()
-        .background(Color.Magenta), topBar = {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { onBackClick.invoke() },
-                modifier = modifier
-                    .wrapContentSize()
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.back),
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = modifier
-                        .wrapContentSize()
-                )
+
+    val gridsOfList = arrayListOf(
+        R.drawable.baseline_grid_on_24,
+        R.drawable.round_grid_view_24,
+        R.drawable.round_view_quilt_24
+    )
+    var changeListView by remember {
+        mutableStateOf(false)
+    }
+    var listItemCount by remember {
+        mutableIntStateOf(2)
+    }
+
+    LaunchedEffect(key1 = changeListView) {
+        listItemCount = when (changeListView) {
+            true -> {
+                3
             }
 
-            Text(
-                modifier = modifier,
-                text = stringResource(id = R.string.popular_title),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontSize = 16.sp,
-                fontFamily = medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start
-            )
+            else -> {
+                2
+            }
         }
+    }
+    Scaffold(modifier = modifier
+        .fillMaxSize(), topBar = {
+        Box(modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 8.dp)) {
+                Row(
+                    modifier = modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(
+                        onClick = { onBackClick.invoke() },
+                        modifier = modifier
+                            .wrapContentSize()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back),
+                            contentDescription = "",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = modifier
+                                .wrapContentSize()
+                        )
+                    }
+
+                    Text(
+                        modifier = modifier,
+                        text = stringResource(id = R.string.popular_title),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontSize = 16.sp,
+                        fontFamily = medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Start
+                    )
+                }
+                IconButton(
+                    onClick = { changeListView = !changeListView
+                              viewModel.handleUIEvent(PopularScreenEvent.ChangeListType(1))},
+                    modifier = modifier
+                        .align(Alignment.CenterEnd)
+                        .wrapContentSize()
+                ) {
+                    Icon(
+                        painter = if (changeListView)
+                            painterResource(id = R.drawable.round_grid_view_24)
+                        else painterResource(
+                            id = R.drawable.baseline_grid_on_24
+                        ),
+                        contentDescription = "",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = modifier
+                            .wrapContentSize()
+                    )
+                }
+            }
+
     }) {
         Column(
             modifier = modifier
@@ -104,7 +158,7 @@ fun PopularScreenRoute(
         ) {
             PopularDetailListScreen(modifier = modifier, popularLazyPagingItems = popularListState, onTopicClick = { id ->
                 onPopularClick.invoke(id)
-            })
+            }, itemViewForList = listItemCount)
         }
     }
 }
@@ -113,18 +167,21 @@ fun PopularScreenRoute(
 private fun PopularDetailListScreen(
     modifier: Modifier,
     popularLazyPagingItems: LazyPagingItems<PopularImage>,
-    onTopicClick: (String) -> Unit
+    onTopicClick: (String) -> Unit,
+    itemViewForList: Int
 ) {
+    val listItemCount by rememberUpdatedState(newValue = itemViewForList)
+
     Column(modifier = modifier
         .fillMaxSize()
         .padding(bottom = 8.dp, start = 8.dp, end = 8.dp)) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(listItemCount),
             modifier = modifier
                 .fillMaxSize(),
             state = rememberLazyGridState(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(
                 count = popularLazyPagingItems.itemCount,
