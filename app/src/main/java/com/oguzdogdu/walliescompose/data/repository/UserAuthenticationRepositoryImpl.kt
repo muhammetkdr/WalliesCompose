@@ -16,6 +16,7 @@ import com.oguzdogdu.walliescompose.data.common.Constants.EMAIL
 import com.oguzdogdu.walliescompose.data.common.Constants.FAVORITES
 import com.oguzdogdu.walliescompose.data.common.Constants.ID
 import com.oguzdogdu.walliescompose.data.common.Constants.IMAGE
+import com.oguzdogdu.walliescompose.data.common.Constants.LOCATION
 import com.oguzdogdu.walliescompose.data.common.Constants.NAME
 import com.oguzdogdu.walliescompose.data.common.Constants.SURNAME
 import com.oguzdogdu.walliescompose.data.model.auth.User
@@ -65,7 +66,8 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     SURNAME to user?.surname,
                     IMAGE to user?.image,
                     FAVORITES to user?.favorites,
-                    BIO to user?.bio
+                    BIO to user?.bio,
+                    LOCATION to user?.location
                 )
 
                 firebaseFirestore.collection(COLLECTION_PATH).document(authResult.user?.uid ?: "")
@@ -77,7 +79,8 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     email = userModel.get(key = EMAIL).toString(),
                     image = userModel.get(key = IMAGE).toString(),
                     favorites = userModel.get(key = FAVORITES) as? List<HashMap<String, String>>,
-                    bio = userModel.get(key = BIO).toString()
+                    bio = userModel.get(key = BIO).toString(),
+                    location = userModel.get(key = LOCATION).toString()
                 )
                 Resource.Success(result.toUserDomain())
             } else {
@@ -120,6 +123,7 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
         val surname = userDocument?.getString(SURNAME)
         val favorites = userDocument?.get(FAVORITES) as? List<HashMap<String, String>>?
         val bio = userDocument?.getString(BIO)
+        val location = userDocument?.getString(LOCATION)
 
         val result = User(
             name = name,
@@ -127,7 +131,8 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
             email = email,
             image = profileImageUrl,
             favorites = favorites,
-            bio = bio
+            bio = bio,
+            location = location
         )
         return flowOf(result.toUserDomain()).toResource()
     }
@@ -258,6 +263,21 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
     }.catch { e ->
         emit("An error occurred: ${e.message}")
     }.toResource()
+
+    override suspend fun changeLocation(location: String?): Flow<Resource<String?>> {
+        return flow {
+            val userId = auth.currentUser?.uid
+            if (userId != null) {
+                firebaseFirestore.collection(COLLECTION_PATH).document(userId).update(LOCATION, location)
+                    .await()
+                emit(location ?: "")
+            } else {
+                emit("User ID is null")
+            }
+        }.catch { e ->
+            emit("An error occurred: ${e.message}")
+        }.toResource()
+    }
 
     override suspend fun signOut() = auth.signOut()
 
