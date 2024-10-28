@@ -72,6 +72,7 @@ import com.oguzdogdu.walliescompose.features.authenticateduser.changeprofilephot
 import com.oguzdogdu.walliescompose.features.settings.components.MenuRowItems
 import com.oguzdogdu.walliescompose.ui.theme.bold
 import com.oguzdogdu.walliescompose.ui.theme.medium
+import com.oguzdogdu.walliescompose.ui.theme.regular
 import com.oguzdogdu.walliescompose.util.MenuRow
 import com.oguzdogdu.walliescompose.util.ReusableMenuRow
 import com.oguzdogdu.walliescompose.util.resolveImage
@@ -85,7 +86,7 @@ fun AuthenticatedUserScreenRoute(
     viewModel: AuthenticatedUserViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
     navigateToLogin: () -> Unit,
-    navigateToChangeNameAndSurname: (String,String) -> Unit,
+    navigateToChangeNameAndSurname: (String,String,String) -> Unit,
     navigateToChangePassword: () -> Unit,
     navigateToChangeEmail: () -> Unit,
 ) {
@@ -183,7 +184,8 @@ fun AuthenticatedUserScreenRoute(
                 }, onChangeNameAndSurnameClick = {
                     navigateToChangeNameAndSurname.invoke(
                         userState.name.orEmpty(),
-                        userState.surname.orEmpty()
+                        userState.surname.orEmpty(),
+                        userState.bio.orEmpty()
                     )
                 }, onChangePasswordClick = {
                     navigateToChangePassword.invoke()
@@ -350,14 +352,14 @@ fun AuthenticatedUserWelcomeCard(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.size(8.dp))
-            /*Text(
-                text = "A loyal member of the gang and deeply devoted to Dutch, Arthur also struggles with his own morals and conscience. Although he has a tough and ruthless exterior, inside he is compassionate and protective.",
+            Text(
+                text = userInfoState.bio.orEmpty(),
                 fontSize = 14.sp,
                 fontFamily = regular,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.fillMaxWidth()
-            ) */
+            )
         }
     }
 }
