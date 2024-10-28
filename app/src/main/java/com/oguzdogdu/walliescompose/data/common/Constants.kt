@@ -10,6 +10,7 @@ object Constants {
     const val NAME = "name"
     const val SURNAME = "surname"
     const val COLLECTION_PATH = "users"
+    const val LOCATION = "location"
     const val IMAGE = "image"
     const val FAVORITES = "favorites"
     const val BIO = "bio"

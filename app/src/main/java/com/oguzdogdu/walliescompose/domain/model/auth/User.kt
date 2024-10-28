@@ -9,5 +9,6 @@ data class User(
     val email: String? = null,
     val image: String? = null,
     val favorites: List<HashMap<String,String>>? = emptyList(),
-    val bio: String? = null
+    val bio: String? = null,
+    val location: String? = null
 )

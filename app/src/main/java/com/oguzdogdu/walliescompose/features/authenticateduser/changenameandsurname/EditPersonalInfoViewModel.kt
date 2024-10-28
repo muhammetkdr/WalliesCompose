@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,17 +44,27 @@ class EditPersonalInfoViewModel @Inject constructor(
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().surname)
     private val bioFlow:MutableStateFlow<String?> =
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().bio)
+    private val locationFlow: MutableStateFlow<String?> =
+        MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().location)
 
     val initialData: StateFlow<EditPersonalInfoState> = combine(
         nameFlow,
         surnameFlow,
-        bioFlow
-    ) { name, surname, bio ->
-        EditPersonalInfoState(name, surname,bio)
+        bioFlow,
+        locationFlow
+    ) { name, surname, bio, location ->
+        _userState.updateAndGet {
+            it.copy(name = name, surname = surname, bio =  bio, location = location)
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditPersonalInfoState("", "")
+        initialValue = EditPersonalInfoState(
+            name = nameFlow.value,
+            surname = surnameFlow.value,
+            bio = bioFlow.value,
+            location = locationFlow.value
+        )
     )
 
     private val _userState: MutableStateFlow<EditPersonalInfoState> = MutableStateFlow(
@@ -65,6 +77,7 @@ class EditPersonalInfoViewModel @Inject constructor(
         when(event) {
             is EditPersonalInfoEvent.ChangedUserNameAndSurname -> changeUserNameAndSurname(event.name,event.surname)
             is EditPersonalInfoEvent.ChangedUserBio -> addOrChangeBio(event.bio)
+            is EditPersonalInfoEvent.ChangedUserLocation -> addOrChangeLocation(event.location)
         }
     }
 
@@ -135,22 +148,39 @@ class EditPersonalInfoViewModel @Inject constructor(
     private fun addOrChangeBio(bio:String?) {
         viewModelScope.launch {
             authenticationRepository.changeBio(bio).collect { state ->
-             state.onFailure {  error ->
-                 sendEffect(
-                     EditPersonalInfoEffect.ShowSnackbar(
-                         SnackbarModel(
-                             type = MessageType.ERROR,
-                             drawableRes = R.drawable.ic_cancel,
-                             message = MessageContent.PlainString(error),
-                             duration = Duration.SHORT
-                         )
-                     )
-                 )
-             }
-                state.onSuccess {
-
+                state.onFailure { error ->
+                    sendEffect(
+                        EditPersonalInfoEffect.ShowSnackbar(
+                            SnackbarModel(
+                                type = MessageType.ERROR,
+                                drawableRes = R.drawable.ic_cancel,
+                                message = MessageContent.PlainString(error),
+                                duration = Duration.SHORT
+                            )
+                        )
+                    )
                 }
+                state.onSuccess {}
             }
         }
+    }
+        private fun addOrChangeLocation(location:String?) {
+            viewModelScope.launch {
+                authenticationRepository.changeLocation(location).collect { state ->
+                    state.onFailure {  error ->
+                        sendEffect(
+                            EditPersonalInfoEffect.ShowSnackbar(
+                                SnackbarModel(
+                                    type = MessageType.ERROR,
+                                    drawableRes = R.drawable.ic_cancel,
+                                    message = MessageContent.PlainString(error),
+                                    duration = Duration.SHORT
+                                )
+                            )
+                        )
+                    }
+                    state.onSuccess {}
+                }
+            }
     }
 }

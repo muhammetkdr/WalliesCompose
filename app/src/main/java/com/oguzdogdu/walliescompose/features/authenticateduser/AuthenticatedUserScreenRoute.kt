@@ -86,7 +86,7 @@ fun AuthenticatedUserScreenRoute(
     viewModel: AuthenticatedUserViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
     navigateToLogin: () -> Unit,
-    navigateToChangeNameAndSurname: (String,String,String) -> Unit,
+    navigateToChangeNameAndSurname: (String,String,String,String) -> Unit,
     navigateToChangePassword: () -> Unit,
     navigateToChangeEmail: () -> Unit,
 ) {
@@ -185,7 +185,8 @@ fun AuthenticatedUserScreenRoute(
                     navigateToChangeNameAndSurname.invoke(
                         userState.name.orEmpty(),
                         userState.surname.orEmpty(),
-                        userState.bio.orEmpty()
+                        userState.bio.orEmpty(),
+                        userState.location.orEmpty()
                     )
                 }, onChangePasswordClick = {
                     navigateToChangePassword.invoke()
@@ -352,6 +353,33 @@ fun AuthenticatedUserWelcomeCard(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.size(8.dp))
+            if (userInfoState.location?.isNotEmpty() == true) {
+                Row(
+                    modifier = modifier
+                        .wrapContentSize()
+                        .align(Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.location),
+                        contentDescription = "Location Icon",
+                        modifier = Modifier.wrapContentSize(),
+                        tint = Color.Red
+                    )
+                    Spacer(modifier = modifier.size(4.dp))
+                    Text(
+                        text = userInfoState.location,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontSize = 14.sp,
+                        fontFamily = medium,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Start,
+                    )
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+            }
             Text(
                 text = userInfoState.bio.orEmpty(),
                 fontSize = 14.sp,

@@ -8,7 +8,8 @@ data class EditPersonalInfoState(
     val name: String? = null,
     val surname: String? = null,
     val bio: String? = null,
+    val location: String? = null,
     val email: String? = null,
-    val profileImage: String? = null
+    val profileImage: String? = null,
 ): ViewState
 
