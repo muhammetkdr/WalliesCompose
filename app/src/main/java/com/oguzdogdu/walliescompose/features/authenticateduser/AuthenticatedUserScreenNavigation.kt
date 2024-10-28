@@ -17,7 +17,7 @@ fun NavController.navigateToAuthenticatedUserScreen(
 fun NavGraphBuilder.authenticatedUserScreen(
     navigateBack: () -> Unit,
     navigateToLogin: () -> Unit,
-    navigateToChangeNameAndSurname: (String,String,String) -> Unit,
+    navigateToChangeNameAndSurname: (String,String,String,String) -> Unit,
     navigateToChangePassword: () -> Unit,
     navigateToChangeEmail: () -> Unit,
 
@@ -30,8 +30,8 @@ fun NavGraphBuilder.authenticatedUserScreen(
             navigateToLogin = {
                 navigateToLogin.invoke()
             },
-            navigateToChangeNameAndSurname = { name , surname, bio ->
-                navigateToChangeNameAndSurname.invoke(name,surname,bio)
+            navigateToChangeNameAndSurname = { name , surname, bio, location ->
+                navigateToChangeNameAndSurname.invoke(name,surname,bio,location)
             },
             navigateToChangePassword = {
                 navigateToChangePassword.invoke()

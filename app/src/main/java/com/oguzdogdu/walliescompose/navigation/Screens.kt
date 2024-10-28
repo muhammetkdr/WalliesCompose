@@ -14,7 +14,8 @@ sealed class Screens {
     data class ChangeNameAndSurnameScreenRoute(
         val name: String? = null,
         val surname: String? = null,
-        val bio: String? = null
+        val bio: String? = null,
+        val location: String? = null
     ) : Screens()
 
     @Serializable

@@ -134,20 +134,23 @@ fun ChangeEmailScreenContent(
     var name by remember { mutableStateOf("") }
     var surname by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
     var isNameFocused by remember { mutableStateOf(false) }
     var isSurnameFocused by remember { mutableStateOf(false) }
     var isBioFocused by remember { mutableStateOf(false) }
+    var isLocationFocused by remember { mutableStateOf(false) }
     val nameInteractionSource = remember { MutableInteractionSource() }
     val surnameInteractionSource = remember { MutableInteractionSource() }
     val bioInteractionSource = remember { MutableInteractionSource() }
+    val locationInteractionSource = remember { MutableInteractionSource() }
     val snackbar by rememberUpdatedState(snackbarModel)
 
     LaunchedEffect(initialState) {
-        if (initialState.name?.isNotEmpty() == true or (initialState.surname?.isNotEmpty() == true)) {
-            name = initialState.name ?: ""
-            surname = initialState.surname ?: ""
-            bio = initialState.bio ?: ""
-        }
+        name = initialState.name ?: ""
+        surname = initialState.surname ?: ""
+        bio = initialState.bio ?: ""
+        location = initialState.location ?: ""
+
     }
 
     LaunchedEffect(nameInteractionSource) {
@@ -173,6 +176,15 @@ fun ChangeEmailScreenContent(
             when (interaction) {
                 is FocusInteraction.Focus -> isBioFocused = true
                 is FocusInteraction.Unfocus -> isBioFocused = false
+            }
+        }
+    }
+
+    LaunchedEffect(locationInteractionSource) {
+        locationInteractionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is FocusInteraction.Focus -> isLocationFocused = true
+                is FocusInteraction.Unfocus -> isLocationFocused = false
             }
         }
     }
@@ -307,6 +319,43 @@ fun ChangeEmailScreenContent(
                     }
                 }
             )
+
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Location",
+                fontSize = 16.sp,
+                fontFamily = medium
+            )
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = location,
+                onValueChange = { location = it },
+                interactionSource = locationInteractionSource,
+                shape = ShapeDefaults.Medium,
+                textStyle = TextStyle(fontFamily = medium),
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    disabledTextColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                ),
+                trailingIcon = {
+                    if (isLocationFocused && bio.isNotEmpty()) {
+                        IconButton(
+                            onClick = { location = "" },
+                            modifier = modifier.wrapContentSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Clear,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = modifier.wrapContentSize()
+                            )
+                        }
+                    }
+                }
+            )
         }
         Column(
             modifier = Modifier
@@ -324,7 +373,13 @@ fun ChangeEmailScreenContent(
                             surname = surname
                         )
                     )
-                    onPersonalInfoEditScreenEvent.invoke(EditPersonalInfoEvent.ChangedUserBio(bio = bio))
+                    onPersonalInfoEditScreenEvent.invoke(EditPersonalInfoEvent
+                        .ChangedUserBio(bio = bio))
+                    onPersonalInfoEditScreenEvent.invoke(
+                        EditPersonalInfoEvent.ChangedUserLocation(
+                            location = location
+                        )
+                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
