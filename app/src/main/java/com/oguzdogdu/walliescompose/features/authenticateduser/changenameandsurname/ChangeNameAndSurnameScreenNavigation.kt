@@ -5,8 +5,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.oguzdogdu.walliescompose.navigation.Screens
 
-fun NavController.navigateToChangeNameAndASurnameScreen(name:String?, surname: String?) {
-    navigate(route = Screens.ChangeNameAndSurnameScreenRoute(name = name, surname = surname))
+fun NavController.navigateToChangeNameAndASurnameScreen(name:String?, surname: String?, bio: String?) {
+    navigate(route = Screens.ChangeNameAndSurnameScreenRoute(name = name, surname = surname, bio = bio))
 }
 
 fun NavGraphBuilder.changeNameAndSurnameScreen(

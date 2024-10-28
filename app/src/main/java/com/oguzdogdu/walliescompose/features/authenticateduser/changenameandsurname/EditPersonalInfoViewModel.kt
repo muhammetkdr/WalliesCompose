@@ -2,12 +2,15 @@ package com.oguzdogdu.walliescompose.features.authenticateduser.changenameandsur
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.core.BaseViewModel
 import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationRepository
+import com.oguzdogdu.walliescompose.domain.wrapper.Resource
 import com.oguzdogdu.walliescompose.domain.wrapper.onFailure
 import com.oguzdogdu.walliescompose.domain.wrapper.onSuccess
+import com.oguzdogdu.walliescompose.domain.wrapper.toResource
 import com.oguzdogdu.walliescompose.features.appstate.Duration
 import com.oguzdogdu.walliescompose.features.appstate.MessageContent
 import com.oguzdogdu.walliescompose.features.appstate.MessageType
@@ -37,12 +40,15 @@ class EditPersonalInfoViewModel @Inject constructor(
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().name)
     private val surnameFlow: MutableStateFlow<String?> =
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().surname)
+    private val bioFlow:MutableStateFlow<String?> =
+        MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().bio)
 
     val initialData: StateFlow<EditPersonalInfoState> = combine(
         nameFlow,
-        surnameFlow
-    ) { name, surname ->
-        EditPersonalInfoState(name, surname)
+        surnameFlow,
+        bioFlow
+    ) { name, surname, bio ->
+        EditPersonalInfoState(name, surname,bio)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -58,6 +64,7 @@ class EditPersonalInfoViewModel @Inject constructor(
         super.handleEvents(event)
         when(event) {
             is EditPersonalInfoEvent.ChangedUserNameAndSurname -> changeUserNameAndSurname(event.name,event.surname)
+            is EditPersonalInfoEvent.ChangedUserBio -> addOrChangeBio(event.bio)
         }
     }
 
@@ -121,6 +128,27 @@ class EditPersonalInfoViewModel @Inject constructor(
                             )
                         }
                     }.collect()
+                }
+            }
+        }
+    }
+    private fun addOrChangeBio(bio:String?) {
+        viewModelScope.launch {
+            authenticationRepository.changeBio(bio).collect { state ->
+             state.onFailure {  error ->
+                 sendEffect(
+                     EditPersonalInfoEffect.ShowSnackbar(
+                         SnackbarModel(
+                             type = MessageType.ERROR,
+                             drawableRes = R.drawable.ic_cancel,
+                             message = MessageContent.PlainString(error),
+                             duration = Duration.SHORT
+                         )
+                     )
+                 )
+             }
+                state.onSuccess {
+
                 }
             }
         }

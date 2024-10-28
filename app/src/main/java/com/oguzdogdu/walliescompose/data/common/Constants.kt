@@ -12,6 +12,7 @@ object Constants {
     const val COLLECTION_PATH = "users"
     const val IMAGE = "image"
     const val FAVORITES = "favorites"
+    const val BIO = "bio"
     const val FILE_NAME_SUFFIX = ".jpg"
     const val FIT = "&fit=facearea"
     const val AUTO = "&auto=enhance"

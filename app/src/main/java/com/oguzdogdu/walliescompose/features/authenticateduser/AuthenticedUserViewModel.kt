@@ -83,7 +83,8 @@ class AuthenticatedUserViewModel @Inject constructor(
                             surname = user?.surname,
                             email = user?.email,
                             profileImage = user?.image,
-                            favorites = user?.favorites.orEmpty()
+                            favorites = user?.favorites.orEmpty(),
+                            bio = user?.bio
                         )
                     }
                 }

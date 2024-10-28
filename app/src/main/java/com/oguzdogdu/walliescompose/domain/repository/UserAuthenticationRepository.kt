@@ -23,4 +23,5 @@ interface UserAuthenticationRepository {
     suspend fun changeEmail(email:String?,password: String?): Flow<Resource<Task<Void>?>>
     suspend fun changeUsername(name:String?): Flow<Resource<String>>
     suspend fun changeSurname(surname:String?): Flow<Resource<String>>
+    suspend fun changeBio(bio:String?):Flow<Resource<String>>
 }

@@ -15,4 +15,5 @@ data class UserInfoState(
     val isAuthenticatedWithGoogle: Boolean = false,
     val favorites: List<HashMap<String, String>>? = emptyList(),
     val photoUri: Uri? = null,
+    val bio : String? = null
 )

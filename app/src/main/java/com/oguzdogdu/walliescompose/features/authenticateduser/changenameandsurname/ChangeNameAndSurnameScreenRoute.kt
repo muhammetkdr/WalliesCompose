@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -39,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,6 +52,7 @@ import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.appstate.AnimatableSnackbar
 import com.oguzdogdu.walliescompose.features.appstate.SnackbarModel
 import com.oguzdogdu.walliescompose.ui.theme.medium
+import com.oguzdogdu.walliescompose.ui.theme.regular
 
 typealias onPersonalInfoEditScreenEvent = (EditPersonalInfoEvent) -> Unit
 
@@ -130,16 +133,20 @@ fun ChangeEmailScreenContent(
 ) {
     var name by remember { mutableStateOf("") }
     var surname by remember { mutableStateOf("") }
+    var bio by remember { mutableStateOf("") }
     var isNameFocused by remember { mutableStateOf(false) }
     var isSurnameFocused by remember { mutableStateOf(false) }
+    var isBioFocused by remember { mutableStateOf(false) }
     val nameInteractionSource = remember { MutableInteractionSource() }
     val surnameInteractionSource = remember { MutableInteractionSource() }
+    val bioInteractionSource = remember { MutableInteractionSource() }
     val snackbar by rememberUpdatedState(snackbarModel)
 
     LaunchedEffect(initialState) {
         if (initialState.name?.isNotEmpty() == true or (initialState.surname?.isNotEmpty() == true)) {
             name = initialState.name ?: ""
             surname = initialState.surname ?: ""
+            bio = initialState.bio ?: ""
         }
     }
 
@@ -157,6 +164,15 @@ fun ChangeEmailScreenContent(
             when (interaction) {
                 is FocusInteraction.Focus -> isSurnameFocused = true
                 is FocusInteraction.Unfocus -> isSurnameFocused = false
+            }
+        }
+    }
+
+    LaunchedEffect(bioInteractionSource) {
+        bioInteractionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is FocusInteraction.Focus -> isBioFocused = true
+                is FocusInteraction.Unfocus -> isBioFocused = false
             }
         }
     }
@@ -184,6 +200,7 @@ fun ChangeEmailScreenContent(
                 onValueChange = { name = it },
                 interactionSource = nameInteractionSource,
                 shape = ShapeDefaults.Medium,
+                textStyle = TextStyle(fontFamily = medium),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     disabledTextColor = Color.Transparent,
@@ -226,6 +243,7 @@ fun ChangeEmailScreenContent(
                 onValueChange = { surname = it },
                 interactionSource = surnameInteractionSource,
                 shape = ShapeDefaults.Medium,
+                textStyle = TextStyle(fontFamily = medium),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     disabledTextColor = Color.Transparent,
@@ -238,6 +256,45 @@ fun ChangeEmailScreenContent(
                     if (isSurnameFocused && surname.isNotEmpty()) {
                         IconButton(
                             onClick = { surname = "" },
+                            modifier = modifier.wrapContentSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Clear,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = modifier.wrapContentSize()
+                            )
+                        }
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Bio",
+                fontSize = 16.sp,
+                fontFamily = medium
+            )
+
+            Spacer(modifier = Modifier.size(8.dp))
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = bio,
+                onValueChange = { bio = it },
+                interactionSource = bioInteractionSource,
+                shape = ShapeDefaults.Medium,
+                textStyle = TextStyle(fontFamily = medium),
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    disabledTextColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                ),
+                trailingIcon = {
+                    if (isBioFocused && bio.isNotEmpty()) {
+                        IconButton(
+                            onClick = { bio = "" },
                             modifier = modifier.wrapContentSize()
                         ) {
                             Icon(
@@ -267,6 +324,7 @@ fun ChangeEmailScreenContent(
                             surname = surname
                         )
                     )
+                    onPersonalInfoEditScreenEvent.invoke(EditPersonalInfoEvent.ChangedUserBio(bio = bio))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
