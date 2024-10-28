@@ -8,7 +8,8 @@ data class User(
     val surname: String?,
     val email: String?,
     val image: String?,
-    val favorites: List<HashMap<String,String>>?
+    val favorites: List<HashMap<String,String>>?,
+    val bio : String?
 )
 
 fun User.toUserDomain() =
@@ -17,5 +18,6 @@ fun User.toUserDomain() =
         surname = surname,
         email = email,
         image = image,
-        favorites = favorites
+        favorites = favorites,
+        bio = bio
     )

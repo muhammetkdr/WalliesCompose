@@ -8,5 +8,6 @@ data class User(
     val surname: String? = null,
     val email: String? = null,
     val image: String? = null,
-    val favorites: List<HashMap<String,String>>? = emptyList()
+    val favorites: List<HashMap<String,String>>? = emptyList(),
+    val bio: String? = null
 )

@@ -8,6 +8,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.SetOptions
+import com.oguzdogdu.walliescompose.data.common.Constants.BIO
 import com.oguzdogdu.walliescompose.data.common.Constants.COLLECTION_PATH
 import com.oguzdogdu.walliescompose.data.common.Constants.EMAIL
 import com.oguzdogdu.walliescompose.data.common.Constants.FAVORITES
@@ -20,10 +23,12 @@ import com.oguzdogdu.walliescompose.data.model.auth.toUserDomain
 import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationRepository
 import com.oguzdogdu.walliescompose.domain.wrapper.Resource
 import com.oguzdogdu.walliescompose.domain.wrapper.toResource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -59,7 +64,8 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     NAME to user?.name,
                     SURNAME to user?.surname,
                     IMAGE to user?.image,
-                    FAVORITES to user?.favorites
+                    FAVORITES to user?.favorites,
+                    BIO to user?.bio
                 )
 
                 firebaseFirestore.collection(COLLECTION_PATH).document(authResult.user?.uid ?: "")
@@ -70,7 +76,8 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     surname = userModel.get(key = SURNAME).toString(),
                     email = userModel.get(key = EMAIL).toString(),
                     image = userModel.get(key = IMAGE).toString(),
-                    favorites = userModel.get(key = FAVORITES) as? List<HashMap<String, String>>
+                    favorites = userModel.get(key = FAVORITES) as? List<HashMap<String, String>>,
+                    bio = userModel.get(key = BIO).toString()
                 )
                 Resource.Success(result.toUserDomain())
             } else {
@@ -112,13 +119,15 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
         val profileImageUrl = userDocument?.getString(IMAGE)
         val surname = userDocument?.getString(SURNAME)
         val favorites = userDocument?.get(FAVORITES) as? List<HashMap<String, String>>?
+        val bio = userDocument?.getString(BIO)
 
         val result = User(
             name = name,
             surname = surname,
             email = email,
             image = profileImageUrl,
-            favorites = favorites
+            favorites = favorites,
+            bio = bio
         )
         return flowOf(result.toUserDomain()).toResource()
     }
@@ -235,6 +244,20 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
             emit("An error occurred: ${e.message}")
         }.toResource()
     }
+
+    override suspend fun changeBio(bio: String?): Flow<Resource<String>> = flow {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            firebaseFirestore.collection(COLLECTION_PATH).document(userId)
+                .update(BIO, bio)
+                .await()
+            emit(bio ?: "")
+        } else {
+            emit("User ID is null")
+        }
+    }.catch { e ->
+        emit("An error occurred: ${e.message}")
+    }.toResource()
 
     override suspend fun signOut() = auth.signOut()
 
