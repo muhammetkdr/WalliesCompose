@@ -162,4 +162,6 @@
     <string name="add_favorites">Image added to favorites </string>
     <string name="delete_favorites">Image removed from favorites </string>
     <string name="edit">Edit </string>
+    <string name="location">Location </string>
+    <string name="bio">Bio </string>
 </resources>
