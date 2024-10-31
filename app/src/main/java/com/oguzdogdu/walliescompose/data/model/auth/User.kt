@@ -10,7 +10,9 @@ data class User(
     val image: String?,
     val favorites: List<HashMap<String,String>>?,
     val bio : String?,
-    val location: String?
+    val location: String?,
+    val stepName: String? = null,
+    val allStepsCompleted: Boolean = false
 )
 
 fun User.toUserDomain() =
@@ -21,5 +23,7 @@ fun User.toUserDomain() =
         image = image,
         favorites = favorites,
         bio = bio,
-        location = location
+        location = location,
+        stepName = stepName,
+        allStepsCompleted = allStepsCompleted
     )

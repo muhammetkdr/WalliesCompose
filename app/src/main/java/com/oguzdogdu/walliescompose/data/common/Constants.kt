@@ -13,6 +13,8 @@ object Constants {
     const val LOCATION = "location"
     const val IMAGE = "image"
     const val FAVORITES = "favorites"
+    const val STEPNAME = "stepname"
+    const val ALL_STEPS = "allsteps"
     const val BIO = "bio"
     const val FILE_NAME_SUFFIX = ".jpg"
     const val FIT = "&fit=facearea"
