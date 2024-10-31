@@ -2,6 +2,7 @@ package com.oguzdogdu.walliescompose.features.authenticateduser
 
 import android.net.Uri
 import androidx.compose.runtime.Stable
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.StepName
 
 @Stable
 data class UserInfoState(
@@ -16,5 +17,7 @@ data class UserInfoState(
     val favorites: List<HashMap<String, String>>? = emptyList(),
     val photoUri: Uri? = null,
     val bio : String? = null,
-    val location: String? = null
+    val location: String? = null,
+    val stepName: String? = StepName.SURNAME.stepName,
+    val allStepsCompleted: Boolean = false
 )

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -38,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -51,8 +51,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.appstate.AnimatableSnackbar
 import com.oguzdogdu.walliescompose.features.appstate.SnackbarModel
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.StepName
 import com.oguzdogdu.walliescompose.ui.theme.medium
-import com.oguzdogdu.walliescompose.ui.theme.regular
 
 typealias onPersonalInfoEditScreenEvent = (EditPersonalInfoEvent) -> Unit
 
@@ -63,7 +63,8 @@ fun ChangeNameAndSurnameScreenRoute(
     modifier: Modifier = Modifier,
 ) {
     val initialState by viewModel.initialData.collectAsStateWithLifecycle()
-
+    val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
+    val firebaseAllStepCompleted by viewModel.allStepsCompleted.collectAsStateWithLifecycle()
     var snackbarModel by remember { mutableStateOf<SnackbarModel?>(null) }
 
     LaunchedEffect(viewModel.effect) {
@@ -113,6 +114,8 @@ fun ChangeNameAndSurnameScreenRoute(
         ) {
             ChangeEmailScreenContent(
                 initialState = initialState,
+                currentStep = currentStep.orEmpty(),
+                firebaseAllStepCompleted = firebaseAllStepCompleted,
                 snackbarModel = snackbarModel,
                 onPersonalInfoEditScreenEvent = { event ->
                     viewModel.sendEvent(event)
@@ -126,6 +129,8 @@ fun ChangeNameAndSurnameScreenRoute(
 @Composable
 fun ChangeEmailScreenContent(
     initialState: EditPersonalInfoState,
+    currentStep: String,
+    firebaseAllStepCompleted: Boolean,
     snackbarModel: SnackbarModel?,
     onPersonalInfoEditScreenEvent: onPersonalInfoEditScreenEvent,
     onDismissSnackbar: () -> Unit,
@@ -144,6 +149,7 @@ fun ChangeEmailScreenContent(
     val bioInteractionSource = remember { MutableInteractionSource() }
     val locationInteractionSource = remember { MutableInteractionSource() }
     val snackbar by rememberUpdatedState(snackbarModel)
+    val context = LocalContext.current
 
     LaunchedEffect(initialState) {
         name = initialState.name ?: ""
@@ -151,6 +157,18 @@ fun ChangeEmailScreenContent(
         bio = initialState.bio ?: ""
         location = initialState.location ?: ""
 
+    }
+
+    var isReadOnlyBio by remember {
+        mutableStateOf(currentStep != StepName.SURNAME.stepName || !firebaseAllStepCompleted)
+    }
+    var isReadOnlyLocation by remember {
+        mutableStateOf(currentStep != StepName.PROFILE_PICTURE.stepName || !firebaseAllStepCompleted)
+    }
+
+    LaunchedEffect(currentStep, firebaseAllStepCompleted) {
+        isReadOnlyBio = currentStep == StepName.SURNAME.stepName || firebaseAllStepCompleted
+        isReadOnlyLocation = currentStep == StepName.PROFILE_PICTURE.stepName || firebaseAllStepCompleted
     }
 
     LaunchedEffect(nameInteractionSource) {
@@ -172,13 +190,14 @@ fun ChangeEmailScreenContent(
     }
 
     LaunchedEffect(bioInteractionSource) {
-        bioInteractionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is FocusInteraction.Focus -> isBioFocused = true
-                is FocusInteraction.Unfocus -> isBioFocused = false
+            bioInteractionSource.interactions.collect { interaction ->
+                when (interaction) {
+                    is FocusInteraction.Focus -> isBioFocused = true
+                    is FocusInteraction.Unfocus -> isBioFocused = false
+
+                }
             }
         }
-    }
 
     LaunchedEffect(locationInteractionSource) {
         locationInteractionSource.interactions.collect { interaction ->
@@ -281,8 +300,9 @@ fun ChangeEmailScreenContent(
                 }
             )
             Spacer(modifier = Modifier.size(8.dp))
+
             Text(
-                text = "Bio",
+                text = stringResource(R.string.bio),
                 fontSize = 16.sp,
                 fontFamily = medium
             )
@@ -291,6 +311,7 @@ fun ChangeEmailScreenContent(
 
             TextField(
                 modifier = Modifier.fillMaxWidth(),
+                readOnly = !isReadOnlyBio,
                 value = bio,
                 onValueChange = { bio = it },
                 interactionSource = bioInteractionSource,
@@ -319,15 +340,17 @@ fun ChangeEmailScreenContent(
                     }
                 }
             )
-
             Spacer(modifier = Modifier.size(8.dp))
+
             Text(
-                text = "Location",
+                text = stringResource(R.string.location),
                 fontSize = 16.sp,
                 fontFamily = medium
             )
+            Spacer(modifier = Modifier.size(8.dp))
             TextField(
                 modifier = Modifier.fillMaxWidth(),
+                readOnly = !isReadOnlyLocation,
                 value = location,
                 onValueChange = { location = it },
                 interactionSource = locationInteractionSource,
@@ -341,7 +364,7 @@ fun ChangeEmailScreenContent(
                     disabledIndicatorColor = Color.Transparent,
                 ),
                 trailingIcon = {
-                    if (isLocationFocused && bio.isNotEmpty()) {
+                    if (isLocationFocused && location.isNotEmpty()) {
                         IconButton(
                             onClick = { location = "" },
                             modifier = modifier.wrapContentSize()
@@ -368,18 +391,13 @@ fun ChangeEmailScreenContent(
             Button(
                 onClick = {
                     onPersonalInfoEditScreenEvent.invoke(
-                        EditPersonalInfoEvent.ChangedUserNameAndSurname(
-                            name = name,
-                            surname = surname
+                            EditPersonalInfoEvent.ChangedUserPersonalInfos(
+                                name = name,
+                                surname = surname,
+                                bio = bio,
+                                location = location
+                            )
                         )
-                    )
-                    onPersonalInfoEditScreenEvent.invoke(EditPersonalInfoEvent
-                        .ChangedUserBio(bio = bio))
-                    onPersonalInfoEditScreenEvent.invoke(
-                        EditPersonalInfoEvent.ChangedUserLocation(
-                            location = location
-                        )
-                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
@@ -407,6 +425,8 @@ fun ChangeNameAndSurnamePreview() {
     ChangeEmailScreenContent(
         snackbarModel = null,
         initialState = EditPersonalInfoState("Muhammet", "Küdür"),
+        currentStep = StepName.SURNAME.stepName,
+        firebaseAllStepCompleted = false,
         onPersonalInfoEditScreenEvent = { },
         onDismissSnackbar = { }
     )

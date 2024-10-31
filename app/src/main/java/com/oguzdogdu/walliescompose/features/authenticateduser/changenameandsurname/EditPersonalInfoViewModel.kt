@@ -2,30 +2,27 @@ package com.oguzdogdu.walliescompose.features.authenticateduser.changenameandsur
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.core.BaseViewModel
 import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationRepository
-import com.oguzdogdu.walliescompose.domain.wrapper.Resource
 import com.oguzdogdu.walliescompose.domain.wrapper.onFailure
 import com.oguzdogdu.walliescompose.domain.wrapper.onSuccess
-import com.oguzdogdu.walliescompose.domain.wrapper.toResource
 import com.oguzdogdu.walliescompose.features.appstate.Duration
 import com.oguzdogdu.walliescompose.features.appstate.MessageContent
 import com.oguzdogdu.walliescompose.features.appstate.MessageType
 import com.oguzdogdu.walliescompose.features.appstate.SnackbarModel
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.StepName
 import com.oguzdogdu.walliescompose.navigation.Screens
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,7 +34,6 @@ class EditPersonalInfoViewModel @Inject constructor(
 ) : BaseViewModel<EditPersonalInfoState, EditPersonalInfoEvent, EditPersonalInfoEffect>(
     EditPersonalInfoState()
 ) {
-
     private val nameFlow: MutableStateFlow<String?> =
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().name)
     private val surnameFlow: MutableStateFlow<String?> =
@@ -46,7 +42,11 @@ class EditPersonalInfoViewModel @Inject constructor(
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().bio)
     private val locationFlow: MutableStateFlow<String?> =
         MutableStateFlow(savedStateHandle.toRoute<Screens.ChangeNameAndSurnameScreenRoute>().location)
-
+    val currentStep: StateFlow<String?> = authenticationRepository.userVerificationStep().map { it }
+        .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5000), null)
+    val allStepsCompleted: StateFlow<Boolean> =
+        authenticationRepository.userVerificationStepsCompleted().map { it }
+            .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5000), false)
     val initialData: StateFlow<EditPersonalInfoState> = combine(
         nameFlow,
         surnameFlow,
@@ -75,9 +75,12 @@ class EditPersonalInfoViewModel @Inject constructor(
     override fun handleEvents(event: EditPersonalInfoEvent) {
         super.handleEvents(event)
         when(event) {
-            is EditPersonalInfoEvent.ChangedUserNameAndSurname -> changeUserNameAndSurname(event.name,event.surname)
-            is EditPersonalInfoEvent.ChangedUserBio -> addOrChangeBio(event.bio)
-            is EditPersonalInfoEvent.ChangedUserLocation -> addOrChangeLocation(event.location)
+            is EditPersonalInfoEvent.ChangedUserPersonalInfos -> {
+                changeUserNameAndSurname(event.name,event.surname)
+                addOrChangeBio(event.bio)
+                addOrChangeLocation(event.location)
+                adjustStep(surname = event.surname, bio = event.bio, location = event.location)
+            }
         }
     }
 
@@ -99,75 +102,59 @@ class EditPersonalInfoViewModel @Inject constructor(
                     else -> {
                         val changeName = authenticationRepository.changeUsername(name)
                         val changeSurName = authenticationRepository.changeSurname(surname)
-                        combine(changeName, changeSurName) { username, userSurname ->
-                        username.onSuccess { name ->
-                           sendEffect(
-                                EditPersonalInfoEffect.ShowSnackbar(
-                                    SnackbarModel(
-                                        type = MessageType.SUCCESS,
-                                        drawableRes = R.drawable.ic_completed,
-                                        message = MessageContent.ResourceString(R.string.user_name_surname_update),
-                                        duration = Duration.SHORT
+                        if (!nameFlow.value.equals(name) || !surnameFlow.value.equals(surname)) {
+                            combine(changeName, changeSurName) { username, userSurname ->
+                                username.onSuccess { name ->
+                                    sendEffect(
+                                        EditPersonalInfoEffect.ShowSnackbar(
+                                            SnackbarModel(
+                                                type = MessageType.SUCCESS,
+                                                drawableRes = R.drawable.ic_completed,
+                                                message = MessageContent.ResourceString(R.string.user_name_surname_update),
+                                                duration = Duration.SHORT
+                                            )
+                                        )
                                     )
-                                )
-                            )
-                            setState(currentState.copy(name = name))
-                        }
-                        username.onFailure { error ->
-                            sendEffect(
-                                EditPersonalInfoEffect.ShowSnackbar(
-                                    SnackbarModel(
-                                        type = MessageType.ERROR,
-                                        drawableRes = R.drawable.ic_cancel,
-                                        message = MessageContent.PlainString(error),
-                                        duration = Duration.SHORT
+                                    setState(currentState.copy(name = name))
+                                }
+                                username.onFailure { error ->
+                                    sendEffect(
+                                        EditPersonalInfoEffect.ShowSnackbar(
+                                            SnackbarModel(
+                                                type = MessageType.ERROR,
+                                                drawableRes = R.drawable.ic_cancel,
+                                                message = MessageContent.PlainString(error),
+                                                duration = Duration.SHORT
+                                            )
+                                        )
                                     )
-                                )
-                            )
-                        }
-                        userSurname.onSuccess { surname ->
-                            setState(currentState.copy(surname = surname))
-                        }
-                        userSurname.onFailure { error ->
-                            sendEffect(
-                                EditPersonalInfoEffect.ShowSnackbar(
-                                    SnackbarModel(
-                                        type = MessageType.ERROR,
-                                        drawableRes = R.drawable.ic_cancel,
-                                        message = MessageContent.PlainString(error),
-                                        duration = Duration.SHORT
+                                }
+                                userSurname.onSuccess { surname ->
+                                    setState(currentState.copy(surname = surname))
+                                }
+                                userSurname.onFailure { error ->
+                                    sendEffect(
+                                        EditPersonalInfoEffect.ShowSnackbar(
+                                            SnackbarModel(
+                                                type = MessageType.ERROR,
+                                                drawableRes = R.drawable.ic_cancel,
+                                                message = MessageContent.PlainString(error),
+                                                duration = Duration.SHORT
+                                            )
+                                        )
                                     )
-                                )
-                            )
+                                }
+                            }.collect()
                         }
-                    }.collect()
                 }
             }
         }
     }
     private fun addOrChangeBio(bio:String?) {
         viewModelScope.launch {
-            authenticationRepository.changeBio(bio).collect { state ->
-                state.onFailure { error ->
-                    sendEffect(
-                        EditPersonalInfoEffect.ShowSnackbar(
-                            SnackbarModel(
-                                type = MessageType.ERROR,
-                                drawableRes = R.drawable.ic_cancel,
-                                message = MessageContent.PlainString(error),
-                                duration = Duration.SHORT
-                            )
-                        )
-                    )
-                }
-                state.onSuccess {}
-            }
-        }
-    }
-        private fun addOrChangeLocation(location:String?) {
-            viewModelScope.launch {
-                authenticationRepository.changeLocation(location).collect { state ->
-                    state.onFailure {  error ->
+            if (!bioFlow.value.contentEquals(bio)){
+                authenticationRepository.changeBio(bio).collect { state ->
+                    state.onFailure { error ->
                         sendEffect(
                             EditPersonalInfoEffect.ShowSnackbar(
                                 SnackbarModel(
@@ -179,8 +166,45 @@ class EditPersonalInfoViewModel @Inject constructor(
                             )
                         )
                     }
-                    state.onSuccess {}
                 }
             }
+        }
+    }
+    private fun addOrChangeLocation(location: String?) {
+        viewModelScope.launch {
+            if (!locationFlow.value.equals(location)) {
+                authenticationRepository.changeLocation(location).collect { state ->
+                    state.onFailure { error ->
+                        sendEffect(
+                            EditPersonalInfoEffect.ShowSnackbar(
+                                SnackbarModel(
+                                    type = MessageType.ERROR,
+                                    drawableRes = R.drawable.ic_cancel,
+                                    message = MessageContent.PlainString(error),
+                                    duration = Duration.SHORT
+                                )
+                            )
+                        )
+                    }
+                    state.onSuccess {
+                        authenticationRepository.changeVerificationStep(StepName.LOCATION.stepName)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun adjustStep(surname: String?, bio: String?, location: String?) {
+        viewModelScope.launch {
+            if (surname?.isNotEmpty() == true && !surname.contentEquals(surnameFlow.value)) {
+                authenticationRepository.changeVerificationStep(StepName.SURNAME.stepName)
+            }
+            if (bio?.isNotEmpty() == true && !bio.contentEquals(bioFlow.value)) {
+                authenticationRepository.changeVerificationStep(StepName.BIO.stepName)
+            }
+            if (location?.isNotEmpty() == true && !location.contentEquals(locationFlow.value)) {
+                authenticationRepository.changeVerificationStep(StepName.LOCATION.stepName)
+            }
+        }
     }
 }
