@@ -1,12 +1,14 @@
 package com.oguzdogdu.walliescompose.features.authenticateduser
 
+import android.annotation.SuppressLint
 import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
@@ -14,6 +16,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +44,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +73,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.authenticateduser.changeprofilephoto.ChangeProfilePhotoDialog
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.AnimatedStepProgressIndicator
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.StepName
 import com.oguzdogdu.walliescompose.features.settings.components.MenuRowItems
 import com.oguzdogdu.walliescompose.ui.theme.bold
 import com.oguzdogdu.walliescompose.ui.theme.medium
@@ -93,10 +99,10 @@ fun AuthenticatedUserScreenRoute(
 
     val userState by viewModel.userState.collectAsStateWithLifecycle()
     val dialogState by viewModel.changeProfilePhotoBottomSheetOpenStat.collectAsStateWithLifecycle()
+    val firebaseSteps by viewModel.currentStep.collectAsStateWithLifecycle()
+    val firebaseAllStepCompleted by viewModel.allStepsCompleted.collectAsState()
 
-    var imageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -106,13 +112,9 @@ fun AuthenticatedUserScreenRoute(
         }
     )
 
-    LifecycleEventEffect(event = Lifecycle.Event.ON_START) {
+    LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
         viewModel.handleUiEvents(AuthenticatedUserEvent.CheckUserAuth)
         viewModel.handleUiEvents(AuthenticatedUserEvent.FetchUserInfos)
-    }
-
-    BackHandler(enabled = true) {
-        navigateBack.invoke()
     }
 
     LaunchedEffect(imageUri) {
@@ -124,25 +126,24 @@ fun AuthenticatedUserScreenRoute(
     Scaffold(modifier = modifier
         .fillMaxSize(), topBar = {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
                 onClick = { navigateBack.invoke() },
-                modifier = modifier.wrapContentSize()
+                modifier = Modifier.wrapContentSize()
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back),
                     contentDescription = "",
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = modifier.wrapContentSize()
+                    modifier = Modifier.wrapContentSize()
                 )
             }
 
             Text(
-                modifier = modifier,
                 text = stringResource(id = R.string.profile_title),
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontSize = 16.sp,
@@ -154,13 +155,16 @@ fun AuthenticatedUserScreenRoute(
         }
     }) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .padding(it)
-                .fillMaxSize()
         ) {
             AuthenticatedUserScreenContent(
                 userInfoState = userState,
-                modifier = modifier,
+                verificationStepFromDB = firebaseSteps,
+                isCompleteAllSteps = firebaseAllStepCompleted,
+                completeAllSteps = { complete ->
+                    viewModel.adjustIsAllStepCompleted(complete)
+                },
                 onSignOutClick = {
                     viewModel.handleUiEvents(AuthenticatedUserEvent.SignOut)
                     navigateToLogin.invoke()
@@ -192,7 +196,8 @@ fun AuthenticatedUserScreenRoute(
                     navigateToChangePassword.invoke()
                 }, onChangeEmailClick = {
                     navigateToChangeEmail.invoke()
-                }, showDialog = dialogState
+                },
+                showDialog = dialogState
             )
         }
     }
@@ -201,7 +206,9 @@ fun AuthenticatedUserScreenRoute(
 @Composable
 fun AuthenticatedUserScreenContent(
     userInfoState: UserInfoState,
-    modifier: Modifier = Modifier,
+    verificationStepFromDB:String?,
+    isCompleteAllSteps: Boolean,
+    completeAllSteps: (Boolean) -> Unit,
     onSignOutClick: () -> Unit,
     onChangeProfilePhotoClick: (Boolean) -> Unit,
     onProfilePhotoClick: () -> Unit,
@@ -210,7 +217,8 @@ fun AuthenticatedUserScreenContent(
     onChangeNameAndSurnameClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onChangeEmailClick: () -> Unit,
-    showDialog: Boolean
+    showDialog: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val isAuthenticated =
         rememberUpdatedState(
@@ -218,19 +226,52 @@ fun AuthenticatedUserScreenContent(
                     or
                     userInfoState.isAuthenticatedWithGoogle
         )
-    if (!isAuthenticated.value) {
-        UserNotAuthenticatedInfo()
+
+    if (!isAuthenticated.value) { UserNotAuthenticatedInfo() }
+
+    var visibilityOfSteps by remember {
+        mutableStateOf(true)
     }
+
+    LaunchedEffect(verificationStepFromDB,isCompleteAllSteps)  {
+        visibilityOfSteps = !isCompleteAllSteps
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .navigationBarsPadding()
     ) {
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
         ) {
+            if (visibilityOfSteps){
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    AnimatedContent(
+                        targetState = isCompleteAllSteps, transitionSpec = {
+                            scaleIn(tween(1500)).togetherWith(scaleOut(tween(1500)))
+                        }, label = ""
+                    ) { state ->
+                        when(state) {
+                            false ->  AnimatedStepProgressIndicator(
+                                userVerificationStep = verificationStepFromDB,
+                                completeAllSteps = completeAllSteps,
+                            )
+                            true -> Text(
+                                text = "\uD83C\uDF89 Congratulations! You have completed your profile! \uD83C\uDF89",
+                                fontFamily = medium,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.size(16.dp))
+            }
+
             AuthenticatedUserWelcomeCard(
                 userInfoState = userInfoState,
                 onChangeProfilePhotoClick = {
@@ -238,7 +279,6 @@ fun AuthenticatedUserScreenContent(
                 }
             )
             EditProfileInformationContent(
-                modifier = modifier,
                 onChangeNameAndSurnameClick = {
                     onChangeNameAndSurnameClick.invoke()
                 },
@@ -252,7 +292,6 @@ fun AuthenticatedUserScreenContent(
         }
         ChangeProfilePhotoDialog(
             userInfoState = userInfoState,
-            modifier = modifier,
             isOpen = showDialog,
             onDismiss = {
                 dismissDialog.invoke(false)
@@ -265,7 +304,7 @@ fun AuthenticatedUserScreenContent(
             onClick = {
                 onSignOutClick.invoke()
             },
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .align(Alignment.BottomCenter),
@@ -303,14 +342,15 @@ fun UserNotAuthenticatedInfo(
 
 @Composable
 fun AuthenticatedUserWelcomeCard(
-    modifier: Modifier = Modifier,
     userInfoState: UserInfoState,
-    onChangeProfilePhotoClick: (Boolean) -> Unit
+    onChangeProfilePhotoClick: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
-            .wrapContentHeight()
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .wrapContentHeight(),
         shape = RoundedCornerShape(16.dp),
         colors = CardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -320,26 +360,30 @@ fun AuthenticatedUserWelcomeCard(
         ).copy(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .padding(12.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .wrapContentHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedContent(
-                targetState = userInfoState.profileImage,
-                transitionSpec = {
-                    (expandIn(tween(1000)))
-                        .togetherWith(shrinkOut(tween(1000)))
-                },
-                label = ""
-            ) { image ->
-                EditableProfileImage(
-                    profileImage = image,
-                    onChangeProfilePhotoClick = onChangeProfilePhotoClick
-                )
-            }
-            Spacer(modifier = Modifier.size(8.dp))
+                AnimatedContent(
+                    targetState = userInfoState.profileImage,
+                    transitionSpec = {
+                        (expandIn(tween(1000)))
+                            .togetherWith(shrinkOut(tween(1000)))
+                    },
+                    label = ""
+                ) { image ->
+                    EditableProfileImage(
+                        profileImage = image,
+                        imageButtonEnabled = userInfoState.stepName == StepName.BIO.stepName || userInfoState.allStepsCompleted,
+                        onChangeProfilePhotoClick = onChangeProfilePhotoClick
+                    )
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+
             Text(
                 buildAnnotatedString {
                     append(stringResource(id = R.string.welcome_profile))
@@ -352,10 +396,10 @@ fun AuthenticatedUserWelcomeCard(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.size(8.dp))
             if (userInfoState.location?.isNotEmpty() == true) {
+                Spacer(modifier = Modifier.size(8.dp))
                 Row(
-                    modifier = modifier
+                    modifier = Modifier
                         .wrapContentSize()
                         .align(Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
@@ -380,14 +424,17 @@ fun AuthenticatedUserWelcomeCard(
                 }
                 Spacer(modifier = Modifier.size(8.dp))
             }
-            Text(
-                text = userInfoState.bio.orEmpty(),
-                fontSize = 14.sp,
-                fontFamily = regular,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (userInfoState.bio?.isNotEmpty() == true) {
+                Text(
+                    text = userInfoState.bio,
+                    fontSize = 14.sp,
+                    fontFamily = regular,
+                    maxLines = 4,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -395,12 +442,15 @@ fun AuthenticatedUserWelcomeCard(
 @Composable
 fun EditableProfileImage(
     profileImage: String?,
+    imageButtonEnabled: Boolean,
     onChangeProfilePhotoClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.wrapContentWidth().height(150.dp),
+        modifier = modifier
+            .wrapContentWidth()
+            .height(150.dp),
     ) {
         AsyncImage(
             model = resolveImage(
@@ -423,7 +473,11 @@ fun EditableProfileImage(
         )
             OutlinedButton(
                 onClick = { onChangeProfilePhotoClick(true) },
-                modifier = Modifier.wrapContentSize().align(Alignment.BottomCenter).height(32.dp),
+                enabled = imageButtonEnabled,
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.BottomCenter)
+                    .height(32.dp),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                 elevation = ButtonDefaults.elevatedButtonElevation(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -453,10 +507,10 @@ fun EditableProfileImage(
 
 @Composable
 fun EditProfileInformationContent(
-    modifier: Modifier,
     onChangeNameAndSurnameClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
-    onChangeEmailClick: () -> Unit
+    onChangeEmailClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val profileOptionsList = immutableListOf(
@@ -482,7 +536,7 @@ fun EditProfileInformationContent(
         items(count = 1) { index: Int ->
             ReusableMenuRow(data = profileOptionsList,
                 index = index,
-                modifier = modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 itemContent = { menu ->
                     MenuRowItems(
                         modifier = modifier, menuRow = menu, arrow = true
@@ -531,6 +585,7 @@ fun handleMenuItemClick(
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun AuthenticatedUserScreenPreview() {
@@ -542,6 +597,9 @@ fun AuthenticatedUserScreenPreview() {
             isAuthenticatedWithGoogle = true,
             isAuthenticatedWithFirebase = false,
         ),
+        verificationStepFromDB = null,
+        completeAllSteps = {},
+        isCompleteAllSteps = false,
         onSignOutClick = {},
         onChangeProfilePhotoClick = {},
         onProfilePhotoClick = {},

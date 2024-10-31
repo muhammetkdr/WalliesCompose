@@ -1,7 +1,6 @@
 package com.oguzdogdu.walliescompose.features.authenticateduser
 
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.storage.FirebaseStorage
@@ -10,12 +9,18 @@ import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationReposito
 import com.oguzdogdu.walliescompose.domain.wrapper.onFailure
 import com.oguzdogdu.walliescompose.domain.wrapper.onLoading
 import com.oguzdogdu.walliescompose.domain.wrapper.onSuccess
+import com.oguzdogdu.walliescompose.features.authenticateduser.component.StepName
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -34,6 +39,13 @@ class AuthenticatedUserViewModel @Inject constructor(
 
     private val _changeProfilePhotoBottomSheetOpenStat = MutableStateFlow(false)
     val changeProfilePhotoBottomSheetOpenStat = _changeProfilePhotoBottomSheetOpenStat.asStateFlow()
+
+    val currentStep: StateFlow<String?> = authenticationRepository.userVerificationStep().map { it }
+        .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5000), null)
+
+    val allStepsCompleted: StateFlow<Boolean> =
+        authenticationRepository.userVerificationStepsCompleted().map { it }
+            .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5000), false)
 
     fun handleUiEvents(event: AuthenticatedUserEvent) {
         when (event) {
@@ -57,13 +69,14 @@ class AuthenticatedUserViewModel @Inject constructor(
 
             is AuthenticatedUserEvent.ChangeProfileImage -> {
                 changeProfileImage(event.photoUri)
+                fetchUserDatas()
             }
         }
     }
 
     private fun fetchUserDatas() {
         viewModelScope.launch {
-            authenticationRepository.fetchUserInfos().collectLatest { result ->
+            authenticationRepository.fetchUserInfos().collect { result ->
                 result.onLoading {
                     _userState.update {
                         it.copy(loading = true)
@@ -85,11 +98,19 @@ class AuthenticatedUserViewModel @Inject constructor(
                             profileImage = user?.image,
                             favorites = user?.favorites.orEmpty(),
                             bio = user?.bio,
-                            location = user?.location
+                            location = user?.location,
+                            stepName = user?.stepName,
+                            allStepsCompleted = user?.allStepsCompleted ?: false
                         )
                     }
                 }
             }
+        }
+    }
+
+    fun adjustIsAllStepCompleted(allStep: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            authenticationRepository.changeStateOfStepsCompleted(allStep)
         }
     }
 
@@ -130,6 +151,7 @@ class AuthenticatedUserViewModel @Inject constructor(
             authenticationRepository.changeProfilePhoto(photo = uploadImage(uri = uri))
             if (photoUploadProcess.isCompleted) {
                 fetchUserDatas()
+                authenticationRepository.changeVerificationStep(StepName.PROFILE_PICTURE.stepName)
             }
         }
     }

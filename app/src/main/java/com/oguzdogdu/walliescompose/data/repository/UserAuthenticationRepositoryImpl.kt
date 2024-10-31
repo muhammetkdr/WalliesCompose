@@ -1,15 +1,12 @@
 package com.oguzdogdu.walliescompose.data.repository
 
 import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.SetOptions
+import com.oguzdogdu.walliescompose.data.common.Constants.ALL_STEPS
 import com.oguzdogdu.walliescompose.data.common.Constants.BIO
 import com.oguzdogdu.walliescompose.data.common.Constants.COLLECTION_PATH
 import com.oguzdogdu.walliescompose.data.common.Constants.EMAIL
@@ -18,18 +15,19 @@ import com.oguzdogdu.walliescompose.data.common.Constants.ID
 import com.oguzdogdu.walliescompose.data.common.Constants.IMAGE
 import com.oguzdogdu.walliescompose.data.common.Constants.LOCATION
 import com.oguzdogdu.walliescompose.data.common.Constants.NAME
+import com.oguzdogdu.walliescompose.data.common.Constants.STEPNAME
 import com.oguzdogdu.walliescompose.data.common.Constants.SURNAME
 import com.oguzdogdu.walliescompose.data.model.auth.User
 import com.oguzdogdu.walliescompose.data.model.auth.toUserDomain
 import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationRepository
 import com.oguzdogdu.walliescompose.domain.wrapper.Resource
 import com.oguzdogdu.walliescompose.domain.wrapper.toResource
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -67,7 +65,9 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     IMAGE to user?.image,
                     FAVORITES to user?.favorites,
                     BIO to user?.bio,
-                    LOCATION to user?.location
+                    LOCATION to user?.location,
+                    STEPNAME to user?.stepName,
+                    ALL_STEPS to user?.allStepsCompleted
                 )
 
                 firebaseFirestore.collection(COLLECTION_PATH).document(authResult.user?.uid ?: "")
@@ -80,7 +80,9 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                     image = userModel.get(key = IMAGE).toString(),
                     favorites = userModel.get(key = FAVORITES) as? List<HashMap<String, String>>,
                     bio = userModel.get(key = BIO).toString(),
-                    location = userModel.get(key = LOCATION).toString()
+                    location = userModel.get(key = LOCATION).toString(),
+                    stepName = userModel.get(key = STEPNAME).toString(),
+                    allStepsCompleted = userModel.get(key = ALL_STEPS) as Boolean
                 )
                 Resource.Success(result.toUserDomain())
             } else {
@@ -124,6 +126,9 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
         val favorites = userDocument?.get(FAVORITES) as? List<HashMap<String, String>>?
         val bio = userDocument?.getString(BIO)
         val location = userDocument?.getString(LOCATION)
+        val step = userDocument?.getString(STEPNAME)
+        val allStepsCompleted = userDocument?.getBoolean(ALL_STEPS) ?: false
+
 
         val result = User(
             name = name,
@@ -132,7 +137,9 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
             image = profileImageUrl,
             favorites = favorites,
             bio = bio,
-            location = location
+            location = location,
+            stepName = step,
+            allStepsCompleted = allStepsCompleted
         )
         return flowOf(result.toUserDomain()).toResource()
     }
@@ -278,6 +285,61 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
             emit("An error occurred: ${e.message}")
         }.toResource()
     }
+
+    override suspend fun changeVerificationStep(stepName: String?) {
+        auth.currentUser?.uid?.let {
+            firebaseFirestore.collection(COLLECTION_PATH).document(it).update(STEPNAME,stepName)
+        }
+    }
+
+    override suspend fun changeStateOfStepsCompleted(allStepsCompleted: Boolean?) {
+        auth.currentUser?.uid?.let {
+            firebaseFirestore.collection(COLLECTION_PATH).document(it).update(ALL_STEPS, allStepsCompleted ?: false).await()
+        }
+    }
+
+    override fun userVerificationStep(): Flow<String> {
+        return callbackFlow {
+            val user = FirebaseAuth.getInstance().currentUser
+            val id = user?.uid ?: ""
+            val registration = FirebaseFirestore.getInstance()
+                .collection(COLLECTION_PATH)
+                .document(id)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    val step = snapshot?.getString(STEPNAME).orEmpty()
+                    trySend(step)
+                }
+            awaitClose {
+                registration.remove()
+            }
+        }
+    }
+
+    override fun userVerificationStepsCompleted(): Flow<Boolean> {
+        return callbackFlow {
+            val user = FirebaseAuth.getInstance().currentUser
+            val id = user?.uid ?: ""
+            val registration = FirebaseFirestore.getInstance()
+                .collection(COLLECTION_PATH)
+                .document(id)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    val step = snapshot?.getBoolean(ALL_STEPS)
+                    trySend(step ?: false)
+                }
+            awaitClose {
+                registration.remove()
+            }
+        }
+    }
+
 
     override suspend fun signOut() = auth.signOut()
 

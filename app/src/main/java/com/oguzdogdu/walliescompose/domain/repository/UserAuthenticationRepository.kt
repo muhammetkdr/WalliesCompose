@@ -1,7 +1,6 @@
 package com.oguzdogdu.walliescompose.domain.repository
 
 import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.AuthResult
 import com.oguzdogdu.walliescompose.domain.model.auth.User
 import com.oguzdogdu.walliescompose.domain.wrapper.Resource
@@ -25,4 +24,8 @@ interface UserAuthenticationRepository {
     suspend fun changeSurname(surname:String?): Flow<Resource<String>>
     suspend fun changeBio(bio:String?):Flow<Resource<String>>
     suspend fun changeLocation(location:String?):Flow<Resource<String?>>
+    suspend fun changeVerificationStep(stepName: String?)
+    suspend fun changeStateOfStepsCompleted(allStepsCompleted: Boolean?)
+    fun userVerificationStep(): Flow<String>
+    fun userVerificationStepsCompleted(): Flow<Boolean>
 }

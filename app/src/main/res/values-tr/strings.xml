@@ -161,4 +161,6 @@
     <string name="add_favorites">Resim favorilere eklendi </string>
     <string name="delete_favorites">Resim favorilerden silindi </string>
     <string name="edit">Düzenle </string>
+    <string name="location">Konum </string>
+    <string name="bio">Bio </string>
 </resources>

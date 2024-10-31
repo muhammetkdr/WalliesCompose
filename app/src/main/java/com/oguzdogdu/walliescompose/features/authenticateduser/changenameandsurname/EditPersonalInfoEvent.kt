@@ -3,7 +3,10 @@ package com.oguzdogdu.walliescompose.features.authenticateduser.changenameandsur
 import com.oguzdogdu.walliescompose.core.ViewEvent
 
 sealed class EditPersonalInfoEvent : ViewEvent {
-    data class ChangedUserNameAndSurname(val name: String?,val surname: String?) : EditPersonalInfoEvent()
-    data class ChangedUserBio(val bio: String?) : EditPersonalInfoEvent()
-    data class ChangedUserLocation(val location: String?) : EditPersonalInfoEvent()
+    data class ChangedUserPersonalInfos(
+        val name: String?,
+        val surname: String?,
+        val bio: String?,
+        val location: String?
+    ) : EditPersonalInfoEvent()
 }

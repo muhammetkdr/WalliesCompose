@@ -1,6 +1,7 @@
 [versions]
 accompanist-permissions = "0.35.0-alpha"
 accompanist-swiperefresh = "0.34.0"
+constraintlayoutCompose = "1.0.1"
 agp = "8.2.2"
 kotlin = "2.0.0"
 balloon-compose = "1.6.4"
@@ -46,6 +47,7 @@ ktorSerializationKotlinxJson = "2.3.11"
 junitKtx = "1.1.5"
 
 [libraries]
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist-permissions" }
 accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanist-swiperefresh" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore-preferences" }

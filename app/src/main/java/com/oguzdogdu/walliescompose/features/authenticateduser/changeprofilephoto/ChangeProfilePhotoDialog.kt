@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChangeProfilePhotoDialog(
     userInfoState: UserInfoState,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     isOpen: Boolean,
     onDismiss: () -> Unit,
     onProfilePhotoClick: () -> Unit,
