@@ -45,7 +45,7 @@ class AuthenticatedUserViewModel @Inject constructor(
 
     val allStepsCompleted: StateFlow<Boolean> =
         authenticationRepository.userVerificationStepsCompleted().map { it }
-            .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5000), false)
+            .stateIn(viewModelScope, started = SharingStarted.Eagerly, false)
 
     fun handleUiEvents(event: AuthenticatedUserEvent) {
         when (event) {

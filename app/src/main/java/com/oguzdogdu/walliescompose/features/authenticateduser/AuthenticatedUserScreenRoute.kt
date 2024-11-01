@@ -15,6 +15,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,8 +31,10 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -154,10 +157,6 @@ fun AuthenticatedUserScreenRoute(
             )
         }
     }) {
-        Column(
-            modifier = Modifier
-                .padding(it)
-        ) {
             AuthenticatedUserScreenContent(
                 userInfoState = userState,
                 verificationStepFromDB = firebaseSteps,
@@ -197,11 +196,11 @@ fun AuthenticatedUserScreenRoute(
                 }, onChangeEmailClick = {
                     navigateToChangeEmail.invoke()
                 },
-                showDialog = dialogState
+                showDialog = dialogState,
+                modifier = Modifier.padding(it)
             )
         }
     }
-}
 
 @Composable
 fun AuthenticatedUserScreenContent(
@@ -236,90 +235,94 @@ fun AuthenticatedUserScreenContent(
     LaunchedEffect(verificationStepFromDB,isCompleteAllSteps)  {
         visibilityOfSteps = !isCompleteAllSteps
     }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp)
+    BoxWithConstraints {
+        val pageSize = this.maxHeight
+        Box(
+            modifier = modifier
+                .height(pageSize)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
         ) {
-            if (visibilityOfSteps){
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    AnimatedContent(
-                        targetState = isCompleteAllSteps, transitionSpec = {
-                            scaleIn(tween(1500)).togetherWith(scaleOut(tween(1500)))
-                        }, label = ""
-                    ) { state ->
-                        when(state) {
-                            false ->  AnimatedStepProgressIndicator(
-                                userVerificationStep = verificationStepFromDB,
-                                completeAllSteps = completeAllSteps,
-                            )
-                            true -> Text(
-                                text = "\uD83C\uDF89 Congratulations! You have completed your profile! \uD83C\uDF89",
-                                fontFamily = medium,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                textAlign = TextAlign.Center
-                            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(pageSize)
+                    .padding(horizontal = 12.dp)
+            ) {
+                if (visibilityOfSteps){
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        AnimatedContent(
+                            targetState = isCompleteAllSteps, transitionSpec = {
+                                scaleIn(tween(1500)).togetherWith(scaleOut(tween(1500)))
+                            }, label = ""
+                        ) { state ->
+                            when(state) {
+                                false ->  AnimatedStepProgressIndicator(
+                                    userVerificationStep = verificationStepFromDB,
+                                    completeAllSteps = completeAllSteps,
+                                )
+                                true -> Text(
+                                    text = "\uD83C\uDF89 Congratulations! You have completed your profile! \uD83C\uDF89",
+                                    fontFamily = medium,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
+                    Spacer(Modifier.size(16.dp))
                 }
-                Spacer(Modifier.size(16.dp))
-            }
 
-            AuthenticatedUserWelcomeCard(
+                AuthenticatedUserWelcomeCard(
+                    userInfoState = userInfoState,
+                    onChangeProfilePhotoClick = {
+                        onChangeProfilePhotoClick.invoke(it)
+                    }
+                )
+                EditProfileInformationContent(
+                    onChangeNameAndSurnameClick = {
+                        onChangeNameAndSurnameClick.invoke()
+                    },
+                    onChangePasswordClick = {
+                        onChangePasswordClick.invoke()
+                    },
+                    onChangeEmailClick = {
+                        onChangeEmailClick.invoke()
+                    }
+                )
+            }
+            ChangeProfilePhotoDialog(
                 userInfoState = userInfoState,
-                onChangeProfilePhotoClick = {
-                    onChangeProfilePhotoClick.invoke(it)
-                }
-            )
-            EditProfileInformationContent(
-                onChangeNameAndSurnameClick = {
-                    onChangeNameAndSurnameClick.invoke()
+                isOpen = showDialog,
+                onDismiss = {
+                    dismissDialog.invoke(false)
+                }, onProfilePhotoClick = {
+                    onProfilePhotoClick.invoke()
+                }, onChangeProfilePhotoButtonClick = {
+                    onChangeProfilePhotoButtonClick.invoke()
+                })
+            Button(
+                onClick = {
+                    onSignOutClick.invoke()
                 },
-                onChangePasswordClick = {
-                    onChangePasswordClick.invoke()
-                },
-                onChangeEmailClick = {
-                    onChangeEmailClick.invoke()
-                }
-            )
-        }
-        ChangeProfilePhotoDialog(
-            userInfoState = userInfoState,
-            isOpen = showDialog,
-            onDismiss = {
-                dismissDialog.invoke(false)
-            }, onProfilePhotoClick = {
-                onProfilePhotoClick.invoke()
-            }, onChangeProfilePhotoButtonClick = {
-                onChangeProfilePhotoButtonClick.invoke()
-            })
-        Button(
-            onClick = {
-                onSignOutClick.invoke()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .align(Alignment.BottomCenter),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            ),
-            shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.sign_out),
-                fontSize = 14.sp,
-                fontFamily = medium,
-                color = Color.White
-            )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .align(Alignment.BottomCenter),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.sign_out),
+                    fontSize = 14.sp,
+                    fontFamily = medium,
+                    color = Color.White
+                )
+            }
         }
     }
 }
@@ -429,7 +432,6 @@ fun AuthenticatedUserWelcomeCard(
                     text = userInfoState.bio,
                     fontSize = 14.sp,
                     fontFamily = regular,
-                    maxLines = 4,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxWidth()
