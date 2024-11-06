@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.HOME_IMAGE_ROTATE_KEY
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.LANGUAGE_KEY
+import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.ONBOARDING
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.THEME_KEY
 import com.oguzdogdu.walliescompose.domain.repository.AppSettingsRepository
 import com.oguzdogdu.walliescompose.util.ThemeKeys
@@ -26,6 +27,10 @@ private val Context.languageDataStore: DataStore<Preferences> by preferencesData
 )
 private val Context.homeRotateImageCardVisibility: DataStore<Preferences> by preferencesDataStore(
     name = HOME_IMAGE_ROTATE_KEY
+)
+
+private val Context.onboardingVisibility: DataStore<Preferences> by preferencesDataStore(
+    name = ONBOARDING
 )
 
 class AppSettingsRepositoryImpl @Inject constructor(
@@ -76,9 +81,26 @@ class AppSettingsRepositoryImpl @Inject constructor(
             preference[preferencesKey]?.let { emit(it) }
         }
     }
+
+    override suspend fun putOnboardingShow(key: String, value: Boolean) {
+        val preferencesKey = booleanPreferencesKey(key)
+        context.onboardingVisibility.edit {
+            it[preferencesKey] = value
+        }
+    }
+
+    override fun getOnboardingShow(key: String): Flow<Boolean> {
+        return flow {
+            val preferencesKey = booleanPreferencesKey(key)
+            val preference = context.onboardingVisibility.data.first()
+            preference[preferencesKey]?.let { emit(it) }
+        }
+    }
+
     companion object {
          const val THEME_KEY = "THEME_KEY"
          const val LANGUAGE_KEY = "LANGUAGE_KEY"
          const val HOME_IMAGE_ROTATE_KEY = "HOME_IMAGE_ROTATE_KEY"
+         const val ONBOARDING = "ONBOARDING"
     }
 }
