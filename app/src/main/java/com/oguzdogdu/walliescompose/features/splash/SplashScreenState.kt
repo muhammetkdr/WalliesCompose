@@ -4,4 +4,5 @@ sealed class SplashScreenState {
     data object StartFlow : SplashScreenState()
     data object UserSignedIn : SplashScreenState()
     data object UserNotSigned : SplashScreenState()
+    data object GoToOnboarding : SplashScreenState()
 }

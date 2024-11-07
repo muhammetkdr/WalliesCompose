@@ -69,10 +69,6 @@ fun LoginScreenRoute(
 
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = true) {
-        navigateBack.invoke()
-    }
-
     Scaffold(
         modifier = modifier.fillMaxSize()
     ) {

@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.oguzdogdu.walliescompose.features.login.googlesignin.GoogleAuthUiClient
-import com.oguzdogdu.walliescompose.features.splash.splashScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -17,28 +16,16 @@ fun WalliesNavHost(
     SharedTransitionLayout {
         NavHost(
             navController = navController,
-            startDestination = Screens.SplashScreenRoute,
+            startDestination = RootGraph,
         ) {
-            splashScreen(goToLoginFlow = {
-                navController.navigate(AuthGraph) {
-                    popUpTo(Screens.SplashScreenRoute) {
-                        inclusive = true
-                    }
-                }
-            }, goToContentScreen = {
-                navController.navigate(NavigationBarGraph) {
-                    popUpTo(Screens.SplashScreenRoute) {
-                        inclusive = true
-                    }
-                }
-            })
-            navigationBarGraph(
-                navHostController = navController,
-                scope = this@SharedTransitionLayout
-            )
+            navigationRootGraph(navHostController = navController)
             navigationAuthGraph(
                 navHostController = navController,
                 googleAuthUiClient = googleAuthUiClient
+            )
+            navigationBarGraph(
+                navHostController = navController,
+                scope = this@SharedTransitionLayout
             )
             navigationHomeGraph(
                 navHostController = navController,
