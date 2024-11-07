@@ -10,13 +10,16 @@ fun NavController.navigateToSplashScreen() = navigate(Screens.SplashScreenRoute)
 
 fun NavGraphBuilder.splashScreen(
     goToLoginFlow: () -> Unit,
-    goToContentScreen: () -> Unit
+    goToContentScreen: () -> Unit,
+    goToOnboarding: () -> Unit
 ) {
     composable<Screens.SplashScreenRoute> {
         SplashScreenRoute(goToLoginFlow = {
             goToLoginFlow.invoke()
         }, goToContentScreen = {
             goToContentScreen.invoke()
+        }, goToOnboarding = {
+            goToOnboarding.invoke()
         })
     }
 }

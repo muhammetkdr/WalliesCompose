@@ -1,22 +1,16 @@
 package com.oguzdogdu.walliescompose.features.splash
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -25,14 +19,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oguzdogdu.walliescompose.R
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreenRoute(
-    modifier: Modifier = Modifier,
     viewModel: SplashViewModel = hiltViewModel(),
     goToLoginFlow: () -> Unit,
-    goToContentScreen: () -> Unit
+    goToContentScreen: () -> Unit,
+    goToOnboarding: () -> Unit
 ) {
     val state by viewModel.splashState.collectAsStateWithLifecycle()
 
@@ -42,22 +35,18 @@ fun SplashScreenRoute(
 
     LaunchedEffect(state) {
         when(state) {
-            SplashScreenState.StartFlow -> {
-            }
-            SplashScreenState.UserNotSigned -> {
-                goToLoginFlow.invoke()
-            }
-            SplashScreenState.UserSignedIn -> {
-                goToContentScreen.invoke()
-            }
+            SplashScreenState.StartFlow -> {}
+            SplashScreenState.UserNotSigned -> goToLoginFlow.invoke()
+            SplashScreenState.UserSignedIn -> goToContentScreen.invoke()
+            SplashScreenState.GoToOnboarding -> goToOnboarding.invoke()
         }
     }
 
-    SplashScreenContent(modifier = modifier)
+    SplashScreenContent()
 }
 
 @Composable
-fun SplashScreenContent(modifier: Modifier) {
+fun SplashScreenContent(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Icon(
             painter = painterResource(id = R.drawable.logo), contentDescription = stringResource(

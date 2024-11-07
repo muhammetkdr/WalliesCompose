@@ -163,4 +163,10 @@
     <string name="edit">Düzenle </string>
     <string name="location">Konum </string>
     <string name="bio">Bio </string>
+    <string name="text_onboarding_first_title">Harika Duvar Kağıtları Keşfet</string>
+    <string name="text_onboarding_first_desc">Cihazınız için binlerce yüksek kaliteli duvar kağıdına göz atın.</string>
+    <string name="text_onboarding_second_title">Favorilerinizi Kaydedin</string>
+    <string name="text_onboarding_second_desc">Duvar kağıtlarını beğenin ve kolay erişim için kişisel koleksiyonunuza kaydedin.</string>
+    <string name="text_onboarding_third_title">İndirin ve Uygulayın</string>
+    <string name="text_onboarding_third_desc">Duvar kağıtlarını doğrudan uygulamadan kolayca indirin ve ayarlayın.</string>
 </resources>
