@@ -1,8 +1,9 @@
 package com.oguzdogdu.walliescompose.features.splash
 
-sealed class SplashScreenState {
-    data object StartFlow : SplashScreenState()
-    data object UserSignedIn : SplashScreenState()
-    data object UserNotSigned : SplashScreenState()
-    data object GoToOnboarding : SplashScreenState()
-}
+import com.oguzdogdu.walliescompose.core.ViewState
+
+data class SplashScreenState(
+    val userSignedIn: Boolean = false,
+    val goToOnboarding: Boolean = false,
+    val loading: Boolean = true
+) : ViewState

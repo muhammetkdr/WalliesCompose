@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -35,12 +35,16 @@ abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : View
 
     fun <T> sendApiCall(
         request: suspend () -> Flow<T>,
-        onLoading: (Boolean) -> Unit,
+        delay:Long = 0,
+        onLoading: (Boolean) -> Unit = {},
         onSuccess: (T) -> Unit,
-        onError: (Throwable) -> Unit,
-        onComplete: () -> Unit
+        onError: (Throwable) -> Unit = {},
+        onComplete: () -> Unit = {}
     ): Job {
         return viewModelScope.launch {
+            if (delay > 0) {
+                delay(delay)
+            }
             try {
                 request()
                     .onStart {
@@ -55,7 +59,7 @@ abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : View
                         cause?.let { onError(it) }
                         onComplete()
                     }
-                    .collectLatest { result ->
+                    .collect { result ->
                         onLoading(false)
                         onSuccess(result)
                     }
@@ -65,6 +69,7 @@ abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : View
             }
         }
     }
+
 
     fun setState(state: State) {
         viewModelScope.launch {

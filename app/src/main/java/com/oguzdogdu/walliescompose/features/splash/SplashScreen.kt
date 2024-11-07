@@ -15,8 +15,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oguzdogdu.walliescompose.R
 
@@ -27,22 +25,23 @@ fun SplashScreenRoute(
     goToContentScreen: () -> Unit,
     goToOnboarding: () -> Unit
 ) {
-    val state by viewModel.splashState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LifecycleEventEffect(event = Lifecycle.Event.ON_CREATE) {
-        viewModel.handleUIEvent(SplashScreenEvent.CheckAuthState)
+    LaunchedEffect(true) {
+        viewModel.sendEvent(SplashScreenEvent.CheckAuthState)
     }
-
+    if (state.loading) {
+        SplashScreenContent()
+    }
     LaunchedEffect(state) {
-        when(state) {
-            SplashScreenState.StartFlow -> {}
-            SplashScreenState.UserNotSigned -> goToLoginFlow.invoke()
-            SplashScreenState.UserSignedIn -> goToContentScreen.invoke()
-            SplashScreenState.GoToOnboarding -> goToOnboarding.invoke()
+        if (!state.loading) {
+            when {
+                state.goToOnboarding -> goToOnboarding.invoke()
+                state.userSignedIn -> goToContentScreen.invoke()
+                else -> goToLoginFlow.invoke()
+            }
         }
     }
-
-    SplashScreenContent()
 }
 
 @Composable
