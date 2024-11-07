@@ -49,6 +49,9 @@ sealed class Screens {
     data object ForgotPasswordScreenNavigationRoute : Screens()
 
     @Serializable
+    data object OnboardingScreenNavigationRoute : Screens()
+
+    @Serializable
     data object SignInWithEmailScreenNavigationRoute : Screens()
 
     @Serializable
