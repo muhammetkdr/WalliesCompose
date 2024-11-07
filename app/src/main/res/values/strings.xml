@@ -164,4 +164,10 @@
     <string name="edit">Edit </string>
     <string name="location">Location </string>
     <string name="bio">Bio </string>
+    <string name="text_onboarding_first_title">Explore Wonderful Wallpapers</string>
+    <string name="text_onboarding_first_desc">Browse thousands of high quality wallpapers for your device.</string>
+    <string name="text_onboarding_second_title">Save Your Favorites</string>
+    <string name="text_onboarding_second_desc">Like wallpapers and save them to your own personal collection for easy access.</string>
+    <string name="text_onboarding_third_title">Download and Apply</string>
+    <string name="text_onboarding_third_desc">Easily download and set wallpapers directly from the app.</string>
 </resources>
