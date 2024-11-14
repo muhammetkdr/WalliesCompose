@@ -2,6 +2,7 @@ package com.oguzdogdu.walliescompose.features.detail
 
 import TooltipPopup
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -46,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +83,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.detail.component.PhotoAttributesCard
@@ -99,6 +102,7 @@ import com.oguzdogdu.walliescompose.util.moveScaffoldOffset
 import com.oguzdogdu.walliescompose.util.moveScaffoldPadding
 import com.oguzdogdu.walliescompose.util.setWallpaperFromUrl
 import com.oguzdogdu.walliescompose.util.shareExternal
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -117,12 +121,14 @@ fun SharedTransitionScope.DetailScreenRoute(
     val stateOfSetWallpaperBottomSheet by detailViewModel.setWallpaperBottomSheetOpenStat.collectAsStateWithLifecycle()
     val photoQuality by detailViewModel.photoQualityType.collectAsStateWithLifecycle()
     val wallpaperPlace by detailViewModel.setWallpaperPlace.collectAsStateWithLifecycle()
+    val downloadStates by detailViewModel.downloadStates.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var shareEnabled by remember { mutableStateOf(false) }
     val launcherOfShare = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         shareEnabled = true
     }
+    val coroutineScope = rememberCoroutineScope()
     var colorFilter by remember {
         mutableStateOf<ColorFilter?>(null)
     }
@@ -141,33 +147,32 @@ fun SharedTransitionScope.DetailScreenRoute(
     }
 
     LaunchedEffect(key1 = photoQuality) {
-        val imageUrl = when (photoQuality) {
-            TypeOfPhotoQuality.RAW.name -> state.detail?.rawQuality.orEmpty()
-            TypeOfPhotoQuality.HIGH.name -> state.detail?.highQuality.orEmpty()
-            TypeOfPhotoQuality.MEDIUM.name -> state.detail?.mediumQuality.orEmpty()
-            TypeOfPhotoQuality.LOW.name -> state.detail?.lowQuality.orEmpty()
-            else -> return@LaunchedEffect
-        }
-
-        if (imageUrl.isNotEmpty()) {
-            context.downloadImageFromWeb(
-                imageTitle = state.detail?.desc.orEmpty(),
-                url = imageUrl,
-                success = {
-                    if (it) {
-                        detailViewModel.setNullValueOfImageUrl()
-                    }
-                },
-                onDismiss = {
-                    detailViewModel.handleScreenEvents(
-                        DetailScreenEvent.OpenDownloadBottomSheet(
-                            isOpen = false
+            val imageUrl = when (photoQuality) {
+                TypeOfPhotoQuality.RAW.name -> state.detail?.rawQuality.orEmpty()
+                TypeOfPhotoQuality.HIGH.name -> state.detail?.highQuality.orEmpty()
+                TypeOfPhotoQuality.MEDIUM.name -> state.detail?.mediumQuality.orEmpty()
+                TypeOfPhotoQuality.LOW.name -> state.detail?.lowQuality.orEmpty()
+                else -> return@LaunchedEffect
+            }
+            if (imageUrl.isNotEmpty()) {
+                context.downloadImageFromWeb(
+                    imageTitle = state.detail?.desc.orEmpty(),
+                    url = imageUrl,
+                    photoQualityType = photoQuality,
+                    scope = coroutineScope,
+                    isProgress = { downloadedBytes, totalBytes ->
+                        detailViewModel.startDownload(
+                            buttonName = photoQuality,
+                            downloadedBytes = downloadedBytes,
+                            totalBytes = totalBytes
                         )
-                    )
-                }
-            )
+                    },
+                    success = {},
+                    failure = {},
+                    onDismiss = {}
+                )
+            }
         }
-    }
 
     LaunchedEffect(key1 = wallpaperPlace) {
         if (wallpaperPlace.isNotEmpty()) {
@@ -233,6 +238,7 @@ fun SharedTransitionScope.DetailScreenRoute(
                 animatedVisibilityScope = animatedVisibilityScope,
                 paddingValues = paddingValues,
                 state = state,
+                downloadStates = downloadStates,
                 wallpaperPlace = wallpaperPlace,
                 stateOfDownloadBottomSheet = stateOfDownloadBottomSheet,
                 stateOfSetWallpaperBottomSheet = stateOfSetWallpaperBottomSheet,
@@ -240,7 +246,7 @@ fun SharedTransitionScope.DetailScreenRoute(
                     detailViewModel.handleScreenEvents(DetailScreenEvent.OpenDownloadBottomSheet(isOpen = isOpen))
                     bottomSheetButtonClicked = isOpen
                 },
-                onSetWallpaperBottomSheetDismiss = {isOpen ->
+                onSetWallpaperBottomSheetDismiss = { isOpen ->
                     detailViewModel.handleScreenEvents(
                         DetailScreenEvent.OpenSetWallpaperBottomSheet(
                             isOpen = isOpen
@@ -248,17 +254,8 @@ fun SharedTransitionScope.DetailScreenRoute(
                     )
                     bottomSheetButtonClicked = false
                 },
-                onRawButtonClick = {
-                    detailViewModel.handleScreenEvents(DetailScreenEvent.PhotoQualityType(type = it))
-                },
-                onFullButtonClick = {
-                    detailViewModel.handleScreenEvents(DetailScreenEvent.PhotoQualityType(type = it))
-                },
-                onMediumButtonClick = {
-                    detailViewModel.handleScreenEvents(DetailScreenEvent.PhotoQualityType(type = it))
-                },
-                onLowButtonClick = {
-                    detailViewModel.handleScreenEvents(DetailScreenEvent.PhotoQualityType(type = it))
+                onDownloadButtonClickWithType = {
+                    detailViewModel.handleScreenEvents(DetailScreenEvent.PhotoQualityType(it))
                 },
                 onSetHomeButtonClick = {
                     detailViewModel.handleScreenEvents(DetailScreenEvent.SetWallpaperPlace(it))
@@ -309,15 +306,13 @@ fun SharedTransitionScope.DetailScreenContent(
     animatedVisibilityScope: AnimatedVisibilityScope,
     paddingValues: PaddingValues,
     state: DetailState,
+    downloadStates: Map<String, DownloadState>,
     wallpaperPlace: String?,
     stateOfDownloadBottomSheet: Boolean,
     stateOfSetWallpaperBottomSheet: Boolean,
     onDownloadBottomSheetDismiss: (Boolean) -> Unit,
     onSetWallpaperBottomSheetDismiss: (Boolean) -> Unit,
-    onRawButtonClick: (TypeOfPhotoQuality) -> Unit,
-    onFullButtonClick: (TypeOfPhotoQuality) -> Unit,
-    onMediumButtonClick: (TypeOfPhotoQuality) -> Unit,
-    onLowButtonClick: (TypeOfPhotoQuality) -> Unit,
+    onDownloadButtonClickWithType: (String) -> Unit,
     onSetHomeButtonClick: (TypeOfSetWallpaper) -> Unit,
     onSetLockButtonClick: (TypeOfSetWallpaper) -> Unit,
     onSetHomeAndLockButtonClick: (TypeOfSetWallpaper) -> Unit,
@@ -469,7 +464,7 @@ fun SharedTransitionScope.DetailScreenContent(
                         }
                     },
                     onShareClick = { url -> onShareButtonClick.invoke(url) },
-                    onDownloadClick = { isOpen -> onDownloadButtonClick.invoke(isOpen) },
+                    onDownloadClick = { isOpen -> onDownloadButtonClick.invoke(true) },
                     onAddFavoriteClick = { onAddFavoriteButtonClick.invoke() },
                     onRemoveFavoriteClick = { onRemoveFavoriteButtonClick.invoke() },
                     onTagClick = { tag -> onTagButtonClick.invoke(tag) },
@@ -478,12 +473,11 @@ fun SharedTransitionScope.DetailScreenContent(
                     })
             }
         }
-        DownloadImageBottomSheet(isOpen = stateOfDownloadBottomSheet,
+        DownloadImageBottomSheet(
+            downloadStates = downloadStates ,
+            isOpen = stateOfDownloadBottomSheet,
             onDismiss = { onDownloadBottomSheetDismiss.invoke(false) },
-            onRawButtonClick = { onRawButtonClick.invoke(TypeOfPhotoQuality.RAW) },
-            onFullButtonClick = { onFullButtonClick.invoke(TypeOfPhotoQuality.HIGH) },
-            onMediumButtonClick = { onMediumButtonClick.invoke(TypeOfPhotoQuality.MEDIUM) },
-            onLowButtonClick = { onLowButtonClick.invoke(TypeOfPhotoQuality.LOW) })
+            onClickDownloadButton = { onDownloadButtonClickWithType.invoke(it) })
         SetWallpaperImageBottomSheet(imageForFilter = bitmapForDialog,
             wallpaperPlace = wallpaperPlace,
             isOpen = stateOfSetWallpaperBottomSheet,
