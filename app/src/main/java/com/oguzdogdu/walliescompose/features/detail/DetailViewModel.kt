@@ -13,9 +13,16 @@ import com.oguzdogdu.walliescompose.domain.wrapper.onSuccess
 import com.oguzdogdu.walliescompose.navigation.Screens
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,6 +35,9 @@ class DetailViewModel@Inject constructor(
 ) : ViewModel() {
     private val _getPhoto = MutableStateFlow(DetailState())
     val photo = _getPhoto.asStateFlow()
+
+    private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
+    val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates.asStateFlow()
 
     private val _downloadBottomSheetOpenStat = MutableStateFlow(false)
     val downloadBottomSheetOpenStat = _downloadBottomSheetOpenStat.asStateFlow()
@@ -75,7 +85,7 @@ class DetailViewModel@Inject constructor(
             }
 
             is DetailScreenEvent.PhotoQualityType ->  {
-                _photoQualityType.value = event.type.name
+                _photoQualityType.value = event.type
             }
 
             is DetailScreenEvent.OpenSetWallpaperBottomSheet -> {
@@ -111,6 +121,100 @@ class DetailViewModel@Inject constructor(
         }
     }
 
+    fun startDownload(
+        buttonName: String,
+        downloadedBytes: Double,
+        totalBytes: Double,
+    ) {
+        viewModelScope.launch {
+            emitDownloadProgress(
+                buttonName = buttonName,
+                downloadedBytes = downloadedBytes,
+                totalBytes = totalBytes,
+            )
+        }
+    }
+
+
+    private suspend fun emitDownloadProgress(
+        buttonName: String,
+        downloadedBytes: Double,
+        totalBytes: Double,
+    ) {
+        val step = 0.7
+        val updateInterval = 500L
+
+        flow {
+            var currentBytes = downloadedBytes
+            while (currentBytes <= totalBytes) {
+                emit(currentBytes)
+                currentBytes += step
+                delay(updateInterval)
+            }
+        }
+            .onStart {
+                updateDownloadState(
+                    buttonName = buttonName,
+                    isDownloading = true,
+                    downloadedBytes = downloadedBytes,
+                    totalBytes = totalBytes,
+                    isCompleted = false
+                )
+            }
+            .onEach { bytes ->
+                updateDownloadState(
+                    buttonName = buttonName,
+                    isDownloading = true,
+                    downloadedBytes = bytes,
+                    totalBytes = totalBytes,
+                    isCompleted = bytes >= totalBytes
+                )
+            }
+            .onCompletion {
+                updateDownloadState(
+                    buttonName = buttonName,
+                    isDownloading = true,
+                    downloadedBytes = totalBytes,
+                    totalBytes = totalBytes,
+                    isCompleted = true
+                )
+                delay(2000)
+                updateDownloadState(
+                    buttonName = buttonName,
+                    isDownloading = false,
+                    downloadedBytes = totalBytes,
+                    totalBytes = totalBytes,
+                    isCompleted = true
+                )
+            }
+            .collect()
+    }
+
+    private fun updateDownloadState(
+        buttonName: String,
+        isDownloading: Boolean,
+        downloadedBytes: Double,
+        totalBytes: Double,
+        isCompleted: Boolean
+    ) {
+        _downloadStates.update { currentState ->
+            val currentButtonState = currentState[buttonName] ?: DownloadState(
+                isDownloading = false,
+                downloadedBytes = 0.0,
+                totalBytes = 0.0,
+                isCompleted = false
+            )
+            val updatedState = currentButtonState.copy(
+                isDownloading = isDownloading,
+                downloadedBytes = downloadedBytes,
+                totalBytes = totalBytes,
+                isCompleted = isCompleted
+            )
+            currentState + (buttonName to updatedState)
+        }
+    }
+
+    // TODO: Sonraki aşamalarda refactor edilecek
     fun setNullValueOfImageUrl() {
         viewModelScope.launch {
             _photoQualityType.value = ""
@@ -213,10 +317,10 @@ class DetailViewModel@Inject constructor(
 }
 
 enum class TypeOfPhotoQuality {
-    LOW,
-    MEDIUM,
+    RAW,
     HIGH,
-    RAW
+    MEDIUM,
+    LOW
 }
 enum class TypeOfSetWallpaper {
     LOCK,

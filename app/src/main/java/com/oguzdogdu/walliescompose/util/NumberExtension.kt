@@ -16,3 +16,14 @@ fun Int.toFormattedString(): String {
         else -> "${this / 1000}K"
     }
 }
+
+fun Double.toReadableSize(): String {
+    // Convert to KB for values below 1 MB, otherwise keep in MB
+    return if (this >= 1.0) {
+        String.format("%.2f MB", this) // Assumes input is in MB
+    } else {
+        String.format("%.0f KB", this * 1024) // Converts to KB if below 1 MB
+    }
+}
+
+
