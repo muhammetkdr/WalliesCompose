@@ -4,15 +4,12 @@ import android.app.DownloadManager
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
-import android.widget.Toast
 import coil.ImageLoader
 import coil.request.ErrorResult
 import coil.request.ImageRequest
@@ -21,51 +18,81 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
 
-
-fun Context.downloadImage(url: String, directoryName: String, fileName: String): Boolean {
-    val directory = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-        directoryName
-    )
-    if (!directory.exists()) {
-        directory.mkdirs()
+fun Context.downloadImageWithProgressPolling(
+    url: String,
+    directoryName: String,
+    fileName: String
+): Flow<DownloadStatus> = flow {
+    val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), directoryName)
+    if (!directory.exists() && !directory.mkdirs()) {
+        emit(DownloadStatus.Failure("Failed to create directory"))
+        return@flow
     }
+
     val file = File(directory, fileName)
-
     if (file.exists()) {
-        return false
+        emit(DownloadStatus.Failure("File already exists"))
+        return@flow
     }
 
-    try {
-        val downloadManager =
-            this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val downloadUri = Uri.parse(url)
-        val request = DownloadManager.Request(downloadUri).apply {
-            setAllowedNetworkTypes(
-                DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE
-            )
-                .setMimeType("image/*")
-                .setAllowedOverRoaming(true)
-                .setNotificationVisibility(
-                    DownloadManager.Request.VISIBILITY_VISIBLE
-                )
-                .setTitle("Wallies")
-                .setDestinationUri(Uri.fromFile(file))
-        }
-        downloadManager.enqueue(request)
-        return true
-    } catch (e: Exception) {
-        Toast.makeText(this, "Image download failed: ${e.message}", Toast.LENGTH_SHORT)
-            .show()
+    val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val downloadUri = Uri.parse(url)
+    val request = DownloadManager.Request(downloadUri).apply {
+        setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        setMimeType("image/*")
+        setAllowedOverRoaming(true)
+        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+        setTitle("Downloading Image")
+        setDestinationUri(Uri.fromFile(file))
     }
-    return false
+
+    val downloadId = downloadManager.enqueue(request)
+
+    while (true) {
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        downloadManager.query(query)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                val totalBytes = cursor.getDouble(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                val downloadedBytes = cursor.getDouble(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                val totalMb = totalBytes / (1024.0 * 1024.0)
+                val downloadedMb = downloadedBytes / (1024.0 * 1024.0)
+                if (totalMb > 0.0) {
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            emit(
+                                DownloadStatus.Success(
+                                    "Download completed",
+                                )
+                            )
+                            return@flow
+                        }
+                        DownloadManager.STATUS_FAILED -> {
+                            emit(DownloadStatus.Failure("Download failed"))
+                            return@flow
+                        }
+                        DownloadManager.STATUS_RUNNING -> {
+                            emit(DownloadStatus.Progress(downloadedMb, totalMb))
+                        }
+                    }
+                }
+            }
+            delay(2000)
+        }
+    }
+}
+
+
+sealed class DownloadStatus {
+    data class Progress(val downloadedBytes: Double, val totalBytes: Double) : DownloadStatus()
+    data class Success(val message: String) : DownloadStatus()
+    data class Failure(val error: String) : DownloadStatus()
 }
 
 fun Uri.toBitmap(context: Context): Bitmap? {
