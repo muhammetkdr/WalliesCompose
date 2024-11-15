@@ -73,7 +73,6 @@ class EditPersonalInfoViewModel @Inject constructor(
     val userState = _userState.asStateFlow()
 
     override fun handleEvents(event: EditPersonalInfoEvent) {
-        super.handleEvents(event)
         when(event) {
             is EditPersonalInfoEvent.ChangedUserPersonalInfos -> {
                 changeUserNameAndSurname(event.name,event.surname)
