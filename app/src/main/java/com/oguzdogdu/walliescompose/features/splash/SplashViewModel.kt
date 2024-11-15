@@ -24,7 +24,6 @@ class SplashViewModel @Inject constructor(
             .stateIn(viewModelScope, started = SharingStarted.Eagerly, false)
 
     override fun handleEvents(event: SplashScreenEvent) {
-        super.handleEvents(event)
         when(event) {
             SplashScreenEvent.CheckAuthState -> checkSignIn()
         }
