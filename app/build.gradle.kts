@@ -1,4 +1,5 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -11,7 +12,14 @@ plugins {
     id("kotlinx-serialization")
 }
 
-val releaseApiKey: String = gradleLocalProperties(rootDir).getProperty("RELEASE_API_KEY")
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
+    }
+}
+
+val releaseApiKey: String = localProperties.getProperty("RELEASE_API_KEY") ?: ""
 android {
     namespace = "com.oguzdogdu.walliescompose"
     compileSdk = 34
