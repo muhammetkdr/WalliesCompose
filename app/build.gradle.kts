@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.Lint
+import com.android.build.api.dsl.LintOptions
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
@@ -51,6 +53,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    lint {
+        disable.addAll(listOf("TypographyFractions","TypographyQuotes"))
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
