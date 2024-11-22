@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import java.util.Properties
 
 plugins {
@@ -40,7 +39,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            buildConfigField ("String", "RELEASE_API_KEY", releaseApiKey)
+            buildConfigField ("String", "RELEASE_API_KEY", "\"$releaseApiKey\"")
             isMinifyEnabled = true
             isDebuggable = false
             isShrinkResources = true
@@ -50,7 +49,7 @@ android {
             )
         }
         getByName("debug") {
-            buildConfigField ("String", "RELEASE_API_KEY", releaseApiKey)
+            buildConfigField ("String", "RELEASE_API_KEY", "\"$releaseApiKey\"")
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
