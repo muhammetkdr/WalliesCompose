@@ -56,13 +56,20 @@ import javax.inject.Inject
     }
         .conflate()
 
+    @Suppress("DEPRECATION")
     @SuppressLint("ObsoleteSdkInt")
-    private fun ConnectivityManager.isCurrentlyConnected() = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-            activeNetwork
-                ?.let(::getNetworkCapabilities)
-                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    private fun ConnectivityManager.isCurrentlyConnected(): Boolean {
+        return when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                val network = activeNetwork
+                val capabilities = getNetworkCapabilities(network)
+                capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+            }
+            else -> {
+                val networkInfo = activeNetworkInfo
+                networkInfo?.isConnected == true
+            }
+        }
+    }
 
-        else -> activeNetworkInfo?.isConnected
-    } ?: false
 }
