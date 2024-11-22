@@ -55,7 +55,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     lint {
-        disable.addAll(listOf("TypographyFractions","TypographyQuotes"))
+        disable += "TypographyFractions" + "TypographyQuotes"
+        enable += "RtlHardcoded" + "RtlCompat" + "RtlEnabled"
+        checkOnly += "NewApi" + "InlinedApi"
+        quiet = true
+        abortOnError = false
+        ignoreWarnings = true
+        checkDependencies = true
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
