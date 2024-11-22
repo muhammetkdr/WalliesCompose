@@ -17,8 +17,6 @@ val localProperties = Properties().apply {
         load(localPropertiesFile.inputStream())
     }
 }
-
-val releaseApiKey: String = localProperties.getProperty("RELEASE_API_KEY") ?: ""
 android {
     namespace = "com.oguzdogdu.walliescompose"
     compileSdk = 34
@@ -39,7 +37,11 @@ android {
 
     buildTypes {
         getByName("release") {
-            buildConfigField ("String", "RELEASE_API_KEY", "\"$releaseApiKey\"")
+            buildConfigField(
+                "String",
+                "RELEASE_API_KEY",
+                "\"${localProperties["RELEASE_API_KEY"]}\""
+            )
             isMinifyEnabled = true
             isDebuggable = false
             isShrinkResources = true
@@ -49,7 +51,11 @@ android {
             )
         }
         getByName("debug") {
-            buildConfigField ("String", "RELEASE_API_KEY", "\"$releaseApiKey\"")
+            buildConfigField(
+                "String",
+                "RELEASE_API_KEY",
+                "\"${localProperties["RELEASE_API_KEY"]}\""
+            )
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true

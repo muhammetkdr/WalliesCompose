@@ -1,4 +1,4 @@
-name: AndroidBuild
+name: AndroidDebugBuild
 on:
   pull_request:
     branches: [ develop ]
@@ -35,23 +35,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Create local.properties
+      - name: Create google-services.json
         env:
-          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          echo "RELEASE_API_KEY=${RELEASE_API_KEY}" > local.properties
+          echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build Release APK with optimizations
-        run: |
-          ./gradlew assembleRelease \
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Upload Debug APK
         if: success()
         uses: actions/upload-artifact@v4.3.1
         with:
-          name: WalliesCompose-release
-          path: app/build/outputs/apk/release/app-release.apk
+          name: WalliesCompose-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7

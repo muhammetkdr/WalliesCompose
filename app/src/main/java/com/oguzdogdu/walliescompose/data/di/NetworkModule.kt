@@ -22,6 +22,7 @@ import io.ktor.serialization.gson.gson
 import javax.inject.Singleton
 
 private const val NETWORK_TIME_OUT = 6_000L
+private const val API_KEY = BuildConfig.RELEASE_API_KEY
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -32,7 +33,7 @@ object NetworkModule {
         return HttpClient(Android) {
             install(DefaultRequest) {
                 url(UNSPLASH_BASE_URL)
-                header("Authorization", "Client-ID ${BuildConfig.RELEASE_API_KEY}")
+                header("Authorization", "Client-ID $API_KEY")
             }
 
             install(ContentNegotiation) {
