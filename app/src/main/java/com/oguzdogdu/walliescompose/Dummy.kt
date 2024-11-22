@@ -1,5 +1,6 @@
 package com.oguzdogdu.walliescompose
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ fun HomeDummy() {
 }
 
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Swipe(snackbarHostState: SnackbarHostState, scope: CoroutineScope) {
     Scaffold(snackbarHost = {
