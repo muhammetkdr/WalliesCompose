@@ -9,13 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Maksimum çalışma süresi
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.1
         with:
-          fetch-depth: 1  # Shallow clone for faster checkout
+          fetch-depth: 1
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4.0.0
@@ -52,8 +52,6 @@ jobs:
           --max-workers=4 \
           --build-cache \
           --configuration-cache \
-          -Dkotlin.compiler.execution.strategy=in-process \
-          -Dkotlin.incremental=false \
           --stacktrace
         env:
           GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g"
