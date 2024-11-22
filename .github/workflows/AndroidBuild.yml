@@ -47,13 +47,6 @@ jobs:
       - name: Build Release APK with optimizations
         run: |
           ./gradlew assembleRelease \
-          --parallel \
-          --max-workers=2 \
-          --build-cache \
-          --configuration-cache \
-          --stacktrace
-        env:
-          GRADLE_OPTS: "-Xmx2g"
 
       - name: Upload APK
         if: success()

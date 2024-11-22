@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.Lint
-import com.android.build.api.dsl.LintOptions
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
@@ -64,7 +62,9 @@ android {
         checkDependencies = true
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+       tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+           kotlinOptions.jvmTarget = "17"
+       }
     }
 
     buildFeatures {
