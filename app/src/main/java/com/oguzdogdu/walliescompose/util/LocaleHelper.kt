@@ -1,5 +1,8 @@
+@file:Suppress("DEPRECATION")
+
 package com.oguzdogdu.walliescompose.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.compose.runtime.Stable
@@ -14,6 +17,7 @@ class LocaleHelper @Inject constructor(@Stable private val context: Context) : I
         return setLocale(defaultLanguage)
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     override fun setLocale(language: String): Context {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             updateResources(language)

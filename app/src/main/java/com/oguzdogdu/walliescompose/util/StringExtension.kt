@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oguzdogdu.walliescompose.util
 
 import android.content.Context

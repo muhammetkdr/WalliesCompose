@@ -1,5 +1,8 @@
+@file:Suppress("DEPRECATION")
+
 package com.oguzdogdu.walliescompose.features.detail.component
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -227,6 +230,7 @@ fun TextLayoutResult.getBoundingBoxesForRange(start: Int, end: Int): List<Rect> 
     }
     return boundingBoxes
 }
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun QuickFavoriteList(favoriteImages: List<FavoriteImages>,) {
     LazyRow(

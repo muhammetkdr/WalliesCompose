@@ -1,8 +1,8 @@
 package com.oguzdogdu.walliescompose.features.detail
 
 import TooltipPopup
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -47,7 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,7 +66,6 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -82,8 +80,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.detail.component.PhotoAttributesCard
@@ -102,7 +100,6 @@ import com.oguzdogdu.walliescompose.util.moveScaffoldOffset
 import com.oguzdogdu.walliescompose.util.moveScaffoldPadding
 import com.oguzdogdu.walliescompose.util.setWallpaperFromUrl
 import com.oguzdogdu.walliescompose.util.shareExternal
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -110,11 +107,11 @@ import kotlinx.coroutines.launch
 fun SharedTransitionScope.DetailScreenRoute(
     animatedVisibilityScope: AnimatedVisibilityScope,
     detailViewModel: DetailViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onProfileDetailClick: (String) -> Unit,
     onTagClick: (String) -> Unit,
-    onNavigateToFavorite: () -> Unit
+    onNavigateToFavorite: () -> Unit,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
     val state by detailViewModel.photo.collectAsStateWithLifecycle()
     val stateOfDownloadBottomSheet by detailViewModel.downloadBottomSheetOpenStat.collectAsStateWithLifecycle()
@@ -464,7 +461,7 @@ fun SharedTransitionScope.DetailScreenContent(
                         }
                     },
                     onShareClick = { url -> onShareButtonClick.invoke(url) },
-                    onDownloadClick = { isOpen -> onDownloadButtonClick.invoke(true) },
+                    onDownloadClick = { onDownloadButtonClick.invoke(true) },
                     onAddFavoriteClick = { onAddFavoriteButtonClick.invoke() },
                     onRemoveFavoriteClick = { onRemoveFavoriteButtonClick.invoke() },
                     onTagClick = { tag -> onTagButtonClick.invoke(tag) },

@@ -1,5 +1,6 @@
 package com.oguzdogdu.walliescompose.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
@@ -55,6 +56,7 @@ import javax.inject.Inject
     }
         .conflate()
 
+    @SuppressLint("ObsoleteSdkInt")
     private fun ConnectivityManager.isCurrentlyConnected() = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
             activeNetwork

@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
@@ -215,9 +215,7 @@ fun SharedTransitionScope.LatestListItem(
         modifier = Modifier
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "popularImage-${latestImage.id}"),
-                animatedVisibilityScope = animatedVisibilityScope,
-                enter = scaleInSharedContentToBounds(),
-                exit = scaleOutSharedContentToBounds()
+                animatedVisibilityScope = animatedVisibilityScope
             )
             .fillMaxWidth()
             .height(240.dp)

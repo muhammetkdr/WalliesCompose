@@ -1,15 +1,7 @@
 package com.oguzdogdu.walliescompose.navigation.utils
 
-import android.graphics.drawable.Icon
-import androidx.annotation.DrawableRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
-import androidx.core.graphics.drawable.IconCompat
+import androidx.compose.material.icons.automirrored.filled.List
 import com.oguzdogdu.walliescompose.R
 
 object WalliesIcons {
@@ -20,7 +12,7 @@ object WalliesIcons {
     val Email = R.drawable.ic_email
     val Error = R.drawable.ic_error
     val Info = R.drawable.info
-    val Sort = Icons.Filled.List
+    val Sort = Icons.AutoMirrored.Filled.List
     val Person = R.drawable.ic_person
     val LogOut = R.drawable.ic_log_out
     val SignUp = R.drawable.ic_sign_up

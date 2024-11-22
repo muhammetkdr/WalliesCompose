@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package com.oguzdogdu.walliescompose.data.repository
 
 import com.google.android.gms.tasks.Task
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+@Suppress("DEPRECATION")
 class UserAuthenticationRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firebaseFirestore: FirebaseFirestore,
@@ -123,7 +126,7 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
         val email = userDocument?.getString(EMAIL)
         val profileImageUrl = userDocument?.getString(IMAGE)
         val surname = userDocument?.getString(SURNAME)
-        val favorites = userDocument?.get(FAVORITES) as? List<HashMap<String, String>>?
+        val favorites = userDocument?.get(FAVORITES) as? List<HashMap<String,String>>?
         val bio = userDocument?.getString(BIO)
         val location = userDocument?.getString(LOCATION)
         val step = userDocument?.getString(STEPNAME)

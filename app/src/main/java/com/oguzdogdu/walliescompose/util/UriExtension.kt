@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.oguzdogdu.walliescompose.util
 
 import android.app.DownloadManager
@@ -126,13 +128,18 @@ fun String.urlToBitmap(
             .data(this@urlToBitmap)
             .allowHardware(false)
             .build()
-        val result = loader.execute(request)
-        if (result is SuccessResult) {
-            return@async (result.drawable as BitmapDrawable).bitmap
-        } else if (result is ErrorResult) {
-            throw result.throwable ?: IllegalStateException("Unknown error occurred")
-        } else {
-            throw IllegalStateException("Unknown result type")
+        when (val result = loader.execute(request)) {
+            is SuccessResult -> {
+                return@async (result.drawable as BitmapDrawable).bitmap
+            }
+
+            is ErrorResult -> {
+                throw result.throwable
+            }
+
+            else -> {
+                throw IllegalStateException("Unknown result type")
+            }
         }
     }
 }

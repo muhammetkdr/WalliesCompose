@@ -52,15 +52,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    lint {
-        disable += "TypographyFractions" + "TypographyQuotes"
-        enable += "RtlHardcoded" + "RtlCompat" + "RtlEnabled"
-        checkOnly += "NewApi" + "InlinedApi"
-        quiet = true
-        abortOnError = false
-        ignoreWarnings = true
-        checkDependencies = true
-    }
+
     kotlinOptions {
        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
            kotlinOptions.jvmTarget = "17"
