@@ -42,14 +42,6 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICES_JSON" | base64 --decode > app/google-services.json
 
-      - name: Inject Web Client ID into strings.xml
-        env:
-          WEB_CLIENT_ID: ${{ secrets.WEB_CLIENT_ID }}
-        run: |
-          echo '<resources>' > app/src/main/res/values/strings.xml
-          echo '<string name="web_client_id">${WEB_CLIENT_ID}</string>' >> app/src/main/res/values/strings.xml
-          echo '</resources>' >> app/src/main/res/values/strings.xml
-
       - name: Create local.properties
         env:
           RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
