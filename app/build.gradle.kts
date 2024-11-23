@@ -39,6 +39,11 @@ android {
         getByName("release") {
             buildConfigField(
                 "String",
+                "WEB_CLIENT_ID",
+                "\"${localProperties["WEB_CLIENT_ID"]}\""
+            )
+            buildConfigField(
+                "String",
                 "RELEASE_API_KEY",
                 "\"${localProperties["RELEASE_API_KEY"]}\""
             )
@@ -51,6 +56,11 @@ android {
             )
         }
         getByName("debug") {
+            buildConfigField(
+                "String",
+                "WEB_CLIENT_ID",
+                "\"${localProperties["WEB_CLIENT_ID"]}\""
+            )
             buildConfigField(
                 "String",
                 "RELEASE_API_KEY",
