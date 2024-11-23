@@ -121,7 +121,6 @@
     <string name="continue_with_email">Continue with e-mail</string>
     <string name="sign_in_to_wallies">Sign in to Wallies</string>
     <string name="sign_in_desc">You can use your account to use and save different wallpapers</string>
-    <string name="web_client_id" translatable="false">907788755834-kra5u3206sk24vcla8vbbl1n9hnqrm49.apps.googleusercontent.com</string>
     <string name="sign_in_desc_title">You can log in with your existing account or create a new account.</string>
     <string name="sign_in">Sign in</string>
     <string name="reset_here">Reset here</string>

@@ -38,8 +38,21 @@ jobs:
       - name: Create google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        shell: bash
         run: |
-           echo $GOOGLE_SERVICES_JSON | base64 -d > app/google-services.json
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > app/google-services.json
+
+      - name: Create local.properties
+        env:
+          RELEASE_API_KEY: ${{ secrets.RELEASE_API_KEY }}
+          WEB_CLIENT_ID: ${{ secrets.WEB_CLIENT_ID }}
+        run: |
+          touch local.properties
+          echo "release.api.key=$RELEASE_API_KEY" > local.properties
+          echo "web.client.id=$WEB_CLIENT_ID" >> local.properties
+          echo "WEB_CLIENT_ID degeri: $WEB_CLIENT_ID"
+          echo "RELEASE_API_KEY degeri: $RELEASE_API_KEY"
+      
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew

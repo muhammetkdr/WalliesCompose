@@ -7,7 +7,7 @@ import androidx.compose.runtime.Stable
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.ktx.auth
-import com.oguzdogdu.walliescompose.R
+import com.oguzdogdu.walliescompose.BuildConfig
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -54,11 +54,14 @@ class GoogleAuthUiClient(
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(context.getString(R.string.web_client_id))
+                    .setServerClientId(CLIENT_ID)
                     .build()
             )
             .setAutoSelectEnabled(true)
             .build()
+    }
+    companion object {
+        private const val CLIENT_ID = BuildConfig.WEB_CLIENT_ID
     }
 }
 
