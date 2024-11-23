@@ -48,8 +48,10 @@ jobs:
           WEB_CLIENT_ID: ${{ secrets.WEB_CLIENT_ID }}
         run: |
           touch local.properties
-          echo "release.api.key=${{ secrets.RELEASE_API_KEY }}" > local.properties
-          echo "web.client.id=${{ secrets.WEB_CLIENT_ID }}" >> local.properties
+          echo "release.api.key=$RELEASE_API_KEY" > local.properties
+          echo "web.client.id=$WEB_CLIENT_ID" >> local.properties
+          echo "WEB_CLIENT_ID degeri: $WEB_CLIENT_ID"
+          echo "RELEASE_API_KEY degeri: $RELEASE_API_KEY"
       
 
       - name: Grant execute permission for gradlew
