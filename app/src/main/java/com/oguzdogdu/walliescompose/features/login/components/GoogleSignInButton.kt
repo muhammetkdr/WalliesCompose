@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -54,10 +53,9 @@ import com.oguzdogdu.walliescompose.ui.theme.medium
 
 @Composable
 fun ButtonGoogleSignIn(
-    onGoogleSignInButtonClick: () -> Unit, loading: Boolean = false, modifier: Modifier = Modifier
+    onGoogleSignInButtonClick: () -> Unit, loading: Boolean, modifier: Modifier = Modifier
 ) {
-    val isLoading by rememberUpdatedState(newValue = loading)
-    val transition = updateTransition(targetState = isLoading, label = "button state")
+    val transition = updateTransition(targetState = loading, label = "button state")
     val primaryColorForArc by remember { mutableStateOf(LightColorPalette.primary) }
     val buttonWidthFactor by transition.animateFloat(
         transitionSpec = {
@@ -80,7 +78,7 @@ fun ButtonGoogleSignIn(
     }
 
     val infiniteTransition = rememberInfiniteTransition(label = "")
-    val animatedRotation by if (isLoading) {
+    val animatedRotation by if (loading) {
         infiniteTransition.animateFloat(
             initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(
                 animation = tween(750, easing = FastOutSlowInEasing),
@@ -91,7 +89,7 @@ fun ButtonGoogleSignIn(
         remember { mutableFloatStateOf(0f) }
     }
 
-    val colorOfProgressArc by if (isLoading) {
+    val colorOfProgressArc by if (loading) {
         infiniteTransition.animateColor(
             initialValue = MaterialTheme.colorScheme.secondaryContainer,
             targetValue = primaryColorForArc,
@@ -121,7 +119,7 @@ fun ButtonGoogleSignIn(
             .animatedButtonProgressBar(
                 color = colorOfProgressArc,
                 rotation = animatedRotation,
-                stateOfLoading = isLoading,
+                stateOfLoading = loading,
                 stateOfButtonWidth = buttonWidthFactor
             ),
         colors = ButtonDefaults.buttonColors(

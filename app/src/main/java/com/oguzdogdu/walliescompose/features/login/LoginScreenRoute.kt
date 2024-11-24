@@ -28,10 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,10 +57,9 @@ fun LoginScreenRoute(
     navigateToHome: () -> Unit,
     navigateToSignInEmail: () -> Unit,
     onContinueWithoutLoginClick: () -> Unit,
-    navigateBack: () -> Unit
 ) {
 
-    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val loginState by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier.fillMaxSize()
@@ -73,20 +69,15 @@ fun LoginScreenRoute(
                 .padding(it)
                 .fillMaxSize()
         ) {
-            LoginScreenContent(state = loginState,
+            LoginScreenContent(
+                state = loginState,
                 googleAuthUiClient = googleAuthUiClient,
-                onContinueWithoutLoginClick = {
-                    onContinueWithoutLoginClick.invoke()
-                },
+                onContinueWithoutLoginClick = onContinueWithoutLoginClick,
                 onGoogleSignInButtonClicked = { idToken ->
-                    viewModel.handleUIEvent(LoginScreenEvent.GoogleButton(idToken = idToken))
+                    viewModel.sendEvent(LoginScreenEvent.GoogleButton(idToken = idToken))
                 },
-                navigateToHome = {
-                    navigateToHome.invoke()
-                },
-                navigateToSignInEmail = {
-                    navigateToSignInEmail.invoke()
-                })
+                navigateToHome = navigateToHome,
+                navigateToSignInEmail = navigateToSignInEmail)
         }
     }
 }
@@ -94,17 +85,14 @@ fun LoginScreenRoute(
 @Composable
 fun LoginScreenContent(
     state: LoginState,
-    modifier: Modifier = Modifier,
     googleAuthUiClient: GoogleAuthUiClient,
     onContinueWithoutLoginClick: () -> Unit,
     onGoogleSignInButtonClicked: (String) -> Unit,
     navigateToSignInEmail: () -> Unit,
-    navigateToHome: () -> Unit
+    navigateToHome: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
 
-    var loading by remember {
-        mutableStateOf(false)
-    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -123,26 +111,18 @@ fun LoginScreenContent(
             })
 
     LaunchedEffect(state) {
-        when (state) {
-            is LoginState.UserSignIn -> {
-                navigateToHome.invoke()
-            }
+        when {
+            state.errorMessage.isNotEmpty() -> Toast.makeText(
+                context,
+                state.errorMessage,
+                Toast.LENGTH_LONG
+            ).show()
 
-            is LoginState.ErrorSignIn -> {
-                Toast.makeText(context, state.errorMessage, Toast.LENGTH_LONG).show()
-            }
-
-            is LoginState.UserNotSignIn -> {}
-            is LoginState.Loading -> {
-                loading = state.loading
-            }
-
-            else -> {}
+            state.userSignedIn -> navigateToHome.invoke()
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -191,7 +171,8 @@ fun LoginScreenContent(
                             ).build()
                         )
                     }
-                }, loading = loading
+                },
+                loading = state.loading
             )
 
             Button(
