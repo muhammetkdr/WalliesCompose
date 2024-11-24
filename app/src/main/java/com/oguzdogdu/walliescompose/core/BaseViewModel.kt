@@ -1,5 +1,6 @@
 package com.oguzdogdu.walliescompose.core
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Stable
 abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : ViewEffect>(
     initialState: State,
 ) : ViewModel() {
@@ -37,7 +39,7 @@ abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : View
         request: suspend () -> Flow<T>,
         delay: Long = 0,
         onLoading: (Boolean) -> Unit = {},
-        onSuccess: (T) -> Unit,
+        onSuccess: suspend (T) -> Unit,
         onError: (Throwable) -> Unit = {},
         onComplete: () -> Unit = {}
     ): Job = viewModelScope.launch {
@@ -46,7 +48,6 @@ abstract class BaseViewModel<State : ViewState, Event : ViewEvent, Effect : View
             request()
                 .onStart { onLoading(true) }
                 .onEach {
-                    onLoading(false)
                     onSuccess(it)
                 }
                 .catch { e ->
