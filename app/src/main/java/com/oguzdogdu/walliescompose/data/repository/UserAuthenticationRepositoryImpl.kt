@@ -96,7 +96,7 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
         result.onFailure { emit(Resource.Error(it.message.toString())) }
     }
 
-    override suspend fun signInWithGoogle(idToken: String?): Flow<Resource<AuthResult>> {
+    override suspend fun signInWithGoogle(idToken: String?): Flow<AuthResult> {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         return flowOf(auth.signInWithCredential(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -112,7 +112,7 @@ class UserAuthenticationRepositoryImpl @Inject constructor(
                         .set(userModel)
                 }
             }
-        }.await()).toResource()
+        }.await())
     }
 
     override suspend fun fetchUserInfos(): Flow<Resource<com.oguzdogdu.walliescompose.domain.model.auth.User?>> {

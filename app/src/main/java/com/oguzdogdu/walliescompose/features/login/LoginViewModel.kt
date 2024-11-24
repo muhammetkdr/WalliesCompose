@@ -1,17 +1,12 @@
 package com.oguzdogdu.walliescompose.features.login
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.oguzdogdu.walliescompose.core.BaseViewModel
+import com.oguzdogdu.walliescompose.core.ViewEffect
 import com.oguzdogdu.walliescompose.domain.repository.UserAuthenticationRepository
-import com.oguzdogdu.walliescompose.domain.wrapper.onFailure
-import com.oguzdogdu.walliescompose.domain.wrapper.onLoading
-import com.oguzdogdu.walliescompose.domain.wrapper.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,12 +14,9 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authenticationRepository: UserAuthenticationRepository
-) : ViewModel() {
+) : BaseViewModel<LoginState, LoginScreenEvent, ViewEffect>(LoginState()) {
 
-    private val _loginState: MutableStateFlow<LoginState> = MutableStateFlow(LoginState.Start)
-    val loginState = _loginState.asStateFlow()
-
-    fun handleUIEvent(event: LoginScreenEvent) {
+    override fun handleEvents(event: LoginScreenEvent) {
         when (event) {
             is LoginScreenEvent.GoogleButton -> {
                 signInWithGoogle(idToken = event.idToken)
@@ -34,26 +26,16 @@ class LoginViewModel @Inject constructor(
 
     private fun signInWithGoogle(idToken: String?) {
         viewModelScope.launch {
-            authenticationRepository.signInWithGoogle(idToken).collect { response ->
-                response.onLoading {
-                    _loginState.update { LoginState.Loading(true) }
-                }
-
-                delay(2000)
-                response.onSuccess {
-                    _loginState.update {
-                        LoginState.Loading(false)
-                        LoginState.UserSignIn
-                    }
-                }
-                response.onFailure { error ->
-                    _loginState.update {
-                        LoginState.ErrorSignIn(
-                            errorMessage = error
-                        )
-                    }
-                }
-            }
+            sendApiCall(request = {
+                authenticationRepository.signInWithGoogle(idToken)
+            }, onSuccess = {
+                setState(currentState.copy(loading = true))
+                delay(2500)
+                setState(currentState.copy(userSignedIn = it.user != null))
+                setState(currentState.copy(loading = false))
+            }, onError = {
+                setState(currentState.copy(errorMessage = it.message.toString()))
+            })
         }
     }
 }

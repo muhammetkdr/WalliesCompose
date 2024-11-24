@@ -20,7 +20,6 @@ fun NavGraphBuilder.loginScreen(
     navigateToHome: () -> Unit,
     navigateToSignInEmail: () -> Unit,
     onContinueWithoutLoginClick: () -> Unit,
-    navigateBack: () -> Unit
 ) {
     composable<Screens.LoginScreenNavigationRoute> {
        LoginScreenRoute(googleAuthUiClient = googleAuthUiClient,navigateToHome = {
@@ -29,9 +28,7 @@ fun NavGraphBuilder.loginScreen(
            onContinueWithoutLoginClick = {
                onContinueWithoutLoginClick.invoke()
            },
-           navigateBack = {
-               navigateBack.invoke()
-           }, navigateToSignInEmail = {
+          navigateToSignInEmail = {
                navigateToSignInEmail.invoke()
            })
     }

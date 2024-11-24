@@ -33,8 +33,6 @@ fun NavGraphBuilder.navigationAuthGraph(
                         inclusive = true
                     }
                 }
-            }, navigateBack = {
-                navHostController.navigateUp()
             }, navigateToSignInEmail = {
                 navHostController.navigate(Screens.SignInWithEmailScreenNavigationRoute)
             })

@@ -1,12 +1,12 @@
 package com.oguzdogdu.walliescompose.features.login
 
 import androidx.compose.runtime.Stable
+import com.oguzdogdu.walliescompose.core.ViewState
 
 @Stable
-sealed class LoginState {
-    data object Start : LoginState()
-    data class Loading(val loading:Boolean) : LoginState()
-    data class ErrorSignIn(val errorMessage: String) : LoginState()
-    data object UserSignIn : LoginState()
-    data object UserNotSignIn : LoginState()
-}
+data class LoginState(
+    val loading: Boolean = false,
+    val errorMessage: String = "",
+    val userSignedIn: Boolean = false
+) : ViewState
+
