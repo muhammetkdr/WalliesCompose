@@ -3,8 +3,11 @@ package com.oguzdogdu.walliescompose.features.collections
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
+import androidx.paging.map
 import com.oguzdogdu.walliescompose.domain.model.collections.WallpaperCollections
 import com.oguzdogdu.walliescompose.domain.repository.WallpaperRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +45,9 @@ class CollectionsViewModel @Inject constructor(
             is CollectionScreenEvent.OpenFilterBottomSheet -> setFilterBottomSheetState(event.isOpen)
             is CollectionScreenEvent.ChoisedFilterOption -> setChoisedFilter(event.choised)
             is CollectionScreenEvent.ChangeListType -> changeListType(event.listType.toString())
-
             is CollectionScreenEvent.CheckListType -> changeListType(listType.value)
+            CollectionScreenEvent.FetchPrivatePhotos -> collectionListPrivatePhoto()
+            CollectionScreenEvent.FetchTotalPhotos -> collectionListRelatedTotalPhotos()
         }
     }
 
@@ -51,16 +55,38 @@ class CollectionsViewModel @Inject constructor(
         savedStateHandle["ListType"] = newType
     }
 
+    private fun collectionListPrivatePhoto() {
+        viewModelScope.launch {
+            _collectionPhotosState.value.let { pagingList ->
+                val filteredList = pagingList.filter { it.private == false }
+                _collectionPhotosState.update {
+                    filteredList
+                }
+            }
+        }
+    }
+
+    private fun collectionListRelatedTotalPhotos() {
+        viewModelScope.launch {
+            repository.getCollectionListRelatedTotalPhotos().cachedIn(viewModelScope)
+                .collectLatest { sortedPagingData ->
+                    sortedPagingData.let { list ->
+                        _collectionPhotosState.value = list
+                    }
+                }
+
+        }
+    }
+
+
     private fun getCollectionsList() {
         viewModelScope.launch {
-            async {
-                repository.getCollectionsList().cachedIn(viewModelScope)
+            repository.getCollectionsList().cachedIn(viewModelScope)
                     .collectLatest { value: PagingData<WallpaperCollections> ->
                         value.let { list ->
                             _collectionPhotosState.value = list
                         }
                     }
-            }.await()
         }
     }
 
@@ -82,43 +108,35 @@ class CollectionsViewModel @Inject constructor(
 
     private fun sortListByTitle() {
         viewModelScope.launch {
-            async { _collectionPhotosState.value = PagingData.empty() }.await()
-            async {
-                repository.getCollectionsListByTitleSort().cachedIn(viewModelScope)
-                    .collectLatest { sortedPagingData ->
-                        sortedPagingData.let { list ->
-                            _collectionPhotosState.value = list
-                        }
+            repository.getCollectionsListByTitleSort().cachedIn(viewModelScope)
+                .collectLatest { sortedPagingData ->
+                    sortedPagingData.let { list ->
+                        _collectionPhotosState.value = list
                     }
-            }.await()
+                }
+
         }
     }
 
     private fun sortListByUpdatedDate() {
         viewModelScope.launch {
-            async { _collectionPhotosState.value = PagingData.empty() }.await()
-            async {
-                repository.getCollectionsListByUpdateDateSort().cachedIn(viewModelScope)
-                    .collectLatest { sortedPagingData ->
-                        sortedPagingData.let { list ->
-                            _collectionPhotosState.value = list
-                        }
+            repository.getCollectionsListByUpdateDateSort().cachedIn(viewModelScope)
+                .collectLatest { sortedPagingData ->
+                    sortedPagingData.let { list ->
+                        _collectionPhotosState.value = list
                     }
-            }.await()
+                }
         }
     }
 
     private fun sortListByLikes() {
         viewModelScope.launch {
-            async { _collectionPhotosState.value = PagingData.empty() }.await()
-            async {
-                repository.getCollectionsListByLikesSort().cachedIn(viewModelScope)
-                    .collectLatest { sortedPagingData ->
-                        sortedPagingData.let { list ->
-                            _collectionPhotosState.value = list
-                        }
+            repository.getCollectionsListByLikesSort().cachedIn(viewModelScope)
+                .collectLatest { sortedPagingData ->
+                    sortedPagingData.let { list ->
+                        _collectionPhotosState.value = list
                     }
-            }.await()
+                }
         }
     }
 

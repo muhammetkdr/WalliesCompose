@@ -15,5 +15,6 @@ data class WallpaperCollections(
     val updatedAt: String?,
     val name: String?,
     val profileImage: String?,
-    val totalPhotos: Int?
+    val totalPhotos: Int?,
+    val private: Boolean?
 )
