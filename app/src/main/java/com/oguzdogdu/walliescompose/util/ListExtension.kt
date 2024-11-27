@@ -7,16 +7,35 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+@Composable
+fun LazyListState.scrollProgress(): Float {
+    return remember(this) {
+        derivedStateOf {
+            val visibleItemInfo = layoutInfo.visibleItemsInfo.firstOrNull()
+            if (visibleItemInfo != null && visibleItemInfo.index == 0) {
+                val totalItemHeight = visibleItemInfo.size.toFloat()
+                val offset = visibleItemInfo.offset.toFloat()
+                (-offset / totalItemHeight).coerceIn(0f, 1f)
+            } else {
+                1f
+            }
+        }
+    }.value
+}
 
 @Composable
 fun <T> ReusableMenuRow(

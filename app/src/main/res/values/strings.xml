@@ -149,8 +149,6 @@
     <string name="shutter_speed">Shutter Speed</string>
     <string name="iso" translatable="false">ISO</string>
     <string name="collection_desc">Explore the world through collections of beautiful images free to use under the Unsplash License.</string>
-    <string name="grid">Grid</string>
-    <string name="vertical">Vertical</string>
     <string name="change_button_text">Change</string>
     <string name="text_dimension_info">Some photos may be larger than the screen size of your device. You should check the dimensions of the photo you want to set as wallpaper.</string>
     <string name="text_detail_color">Main Color </string>
@@ -169,4 +167,8 @@
     <string name="text_onboarding_second_desc">Like wallpapers and save them to your own personal collection for easy access.</string>
     <string name="text_onboarding_third_title">Download and Apply</string>
     <string name="text_onboarding_third_desc">Easily download and set wallpapers directly from the app.</string>
+    <string name="text_last_collected">Last Collected</string>
+    <string name="text_total_photos">Total Photos</string>
+    <string name="text_over_view">Overview</string>
+    <string name="text_private_photos">Private Photos</string>
 </resources>
