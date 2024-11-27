@@ -23,6 +23,8 @@ data class CollectionResponse(
     val updated_at: String?,
     @SerializedName("total_photos")
     val total_photos: Int,
+    @SerializedName("private")
+    val private: Boolean?,
     @SerializedName("cover_photo")
     val cover_photo: Photo?,
     @SerializedName("preview_photos")
@@ -43,7 +45,8 @@ fun CollectionResponse.toCollectionDomain() =
         updatedAt = updated_at,
         name = user?.name.orEmpty(),
         profileImage = user?.profileImage?.medium.orEmpty(),
-        totalPhotos = total_photos
+        totalPhotos = total_photos,
+        private = private
     )
 fun CollectionResponse.toUserCollection() = UserCollections(
     id = id,

@@ -25,6 +25,7 @@ import com.oguzdogdu.walliescompose.data.model.topics.toDomainTopicList
 import com.oguzdogdu.walliescompose.data.model.topics.toDomainTopics
 import com.oguzdogdu.walliescompose.data.pagination.CollectionByLikesPagingSource
 import com.oguzdogdu.walliescompose.data.pagination.CollectionByUpdateDatePagingSource
+import com.oguzdogdu.walliescompose.data.pagination.CollectionRelatedTotalPhotos
 import com.oguzdogdu.walliescompose.data.pagination.CollectionsByTitlePagingSource
 import com.oguzdogdu.walliescompose.data.pagination.CollectionsPagingSource
 import com.oguzdogdu.walliescompose.data.pagination.LatestPagingSource
@@ -280,5 +281,18 @@ class WallpaperRepositoryImpl @Inject constructor(
         return userPreferencesDao.deleteRecentSearchKeyByKeyword(
            keyword = keyword.orEmpty()
         )
+    }
+
+    override suspend fun getCollectionListRelatedTotalPhotos(): Flow<PagingData<WallpaperCollections>> {
+        val pagingConfig = PagingConfig(pageSize = PAGE_ITEM_LIMIT)
+        return Pager(
+            config = pagingConfig,
+            initialKey = 1,
+            pagingSourceFactory = { CollectionRelatedTotalPhotos(service = service) }
+        ).flow.mapNotNull {
+            it.map { collection ->
+                collection.toCollectionDomain()
+            }
+        }
     }
 }

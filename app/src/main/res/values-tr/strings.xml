@@ -149,8 +149,6 @@
     <string name="dimensions">Boyutlar</string>
     <string name="shutter_speed">Pozlama Süresi</string>
     <string name="collection_desc">Unsplash Lisansı altında ücretsiz olarak kullanabileceğiniz güzel görsel koleksiyonları aracılığıyla dünyayı keşfedin.</string>
-    <string name="grid">Izgara</string>
-    <string name="vertical">Dikey</string>
     <string name="change_button_text">Değiştir</string>
     <string name="text_dimension_info">Bazı fotoğraflar cihazının ekran ölçülerinden büyük olabilir. Duvar kağıdı olarak ayarlamak istediğin fotoğrafın ölçülerini kontrol etmelisin.</string>
     <string name="text_detail_color">Ana Renk </string>
@@ -169,4 +167,8 @@
     <string name="text_onboarding_second_desc">Duvar kağıtlarını beğenin ve kolay erişim için kişisel koleksiyonunuza kaydedin.</string>
     <string name="text_onboarding_third_title">İndirin ve Uygulayın</string>
     <string name="text_onboarding_third_desc">Duvar kağıtlarını doğrudan uygulamadan kolayca indirin ve ayarlayın.</string>
+    <string name="text_last_collected">Son Eklenen Tarih</string>
+    <string name="text_total_photos">Toplam Fotoğraf Sayısı</string>
+    <string name="text_over_view">Görünüm</string>
+    <string name="text_private_photos">Özel Fotoğraflar</string>
 </resources>

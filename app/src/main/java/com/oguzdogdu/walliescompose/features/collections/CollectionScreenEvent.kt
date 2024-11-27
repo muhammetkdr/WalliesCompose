@@ -4,6 +4,8 @@ sealed class CollectionScreenEvent {
     data object FetchLatestData : CollectionScreenEvent()
     data object SortByTitles : CollectionScreenEvent()
     data object SortByLikes : CollectionScreenEvent()
+    data object FetchPrivatePhotos: CollectionScreenEvent()
+    data object FetchTotalPhotos: CollectionScreenEvent()
     data object SortByUpdatedDate: CollectionScreenEvent()
     data object CheckListType: CollectionScreenEvent()
     data class OpenFilterBottomSheet(val isOpen: Boolean) : CollectionScreenEvent()

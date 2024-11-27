@@ -39,5 +39,5 @@ interface WallpaperRepository {
     suspend fun insertRecentSearchKeysToDB(userPreferences: UserPreferences)
     suspend fun getRecentSearchKeysFromDB(): Flow<List<UserPreferences>?>
     suspend fun deleteRecentSearchKeysFromDB(keyword:String?)
-
+    suspend fun getCollectionListRelatedTotalPhotos(): Flow<PagingData<WallpaperCollections>>
 }
