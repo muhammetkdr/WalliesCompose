@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +25,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.oguzdogdu.walliescompose.R
+import com.oguzdogdu.walliescompose.ui.theme.medium
 import com.oguzdogdu.walliescompose.util.ListItem
 import com.oguzdogdu.walliescompose.util.MenuRow
 
@@ -70,13 +74,14 @@ fun MenuRowItems(modifier: Modifier, menuRow: MenuRow,arrow:Boolean) {
 @Composable
 fun RowOfSettingOptions(
     onClickToItem: (ListItem.Content) -> Unit,
+    customIcon: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
     listItem: ListItem.Content,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(IntrinsicSize.Min)
             .padding(8.dp)
             .clickable {
                 onClickToItem(listItem)
@@ -89,35 +94,55 @@ fun RowOfSettingOptions(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(modifier = modifier
+        Row (modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp)) {
-            Row(
-                modifier = modifier.wrapContentSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(
+                modifier = Modifier.fillMaxWidth().weight(4f).padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
             ) {
-                listItem.icon?.let {
-                    Image(painter = painterResource(id = it), contentDescription = "")
+                Row(
+                    modifier = modifier.wrapContentSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    listItem.icon?.let {
+                        Image(painter = painterResource(id = it), contentDescription = "")
+                        Spacer(modifier = modifier.size(8.dp))
+                    }
+                    listItem.title?.let {
+                        Text(
+                            modifier = modifier.padding(start = 8.dp),
+                            text = stringResource(id = it),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
                 }
-                Spacer(modifier = modifier.size(8.dp))
                 listItem.description?.let {
+                    Spacer(modifier = modifier.size(8.dp))
                     Text(
-                        modifier = modifier.padding(start = 8.dp),
+                        modifier = modifier.padding(horizontal = 8.dp),
                         text = stringResource(id = it),
-                        maxLines = 1,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleSmall
+                        fontFamily = medium,
+                        fontSize = 14.sp
                     )
                 }
-
             }
             if (listItem.arrow) {
                 Icon(
                     painter = painterResource(id = R.drawable.arrow_small),
                     contentDescription = "",
-                    modifier = modifier.align(Alignment.CenterEnd)
+                    modifier = Modifier.wrapContentSize().padding(vertical = 8.dp)
                 )
+            }
+            if (listItem.customIcon) {
+                customIcon.invoke(Modifier.wrapContentSize().padding(vertical = 8.dp))
             }
         }
     }
