@@ -1,6 +1,5 @@
 package com.oguzdogdu.walliescompose.util
 
-import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -35,8 +34,9 @@ sealed class ListItem {
     data class Header(@StringRes val titleRes: Int? = null,) : ListItem()
     @Stable
     data class Content(
-        val id: Int, @StringRes val description: Int? = null,
-        @DrawableRes val icon: Int? = null, val arrow: Boolean = false
+        val id: Int, @StringRes val title: Int? = null,
+        @StringRes val description: Int? = null,
+        @DrawableRes val icon: Int? = null, val arrow: Boolean = false, val customIcon: Boolean = false
     ) : ListItem()
 }
 

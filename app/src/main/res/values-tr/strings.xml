@@ -171,4 +171,8 @@
     <string name="text_total_photos">Toplam Fotoğraf Sayısı</string>
     <string name="text_over_view">Görünüm</string>
     <string name="text_private_photos">Özel Fotoğraflar</string>
+    <string name="text_shortcuts">Kısayollar</string>
+    <string name="change_theme">Tema Değiştir</string>
+    <string name="change_theme_desc">Tema, dil veya uygulama ile ilgili bazı ayarları belli ekranlarda hızlıca değiştirebilmene olanak tanır.</string>
+
 </resources>

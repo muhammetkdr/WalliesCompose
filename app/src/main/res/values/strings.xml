@@ -171,4 +171,7 @@
     <string name="text_total_photos">Total Photos</string>
     <string name="text_over_view">Overview</string>
     <string name="text_private_photos">Private Photos</string>
+    <string name="text_shortcuts">Shortcuts</string>
+    <string name="change_theme">Change Theme</string>
+    <string name="change_theme_desc">It allows you to quickly change some settings related to theme, language or app on certain screens.</string>
 </resources>

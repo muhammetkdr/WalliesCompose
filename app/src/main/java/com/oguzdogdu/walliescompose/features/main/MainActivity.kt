@@ -1,15 +1,15 @@
 package com.oguzdogdu.walliescompose.features.main
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.google.android.gms.auth.api.identity.Identity
@@ -50,32 +50,31 @@ class MainActivity : ComponentActivity() {
 
             }
 
-            LaunchedEffect(application.theme.value) {
-                viewModel.handleScreenEvents(MainScreenEvent.ThemeChanged)
-            }
-
             LaunchedEffect(application.language.value) {
                 viewModel.handleScreenEvents(MainScreenEvent.LanguageChanged)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    LocaleHelper(context = this@MainActivity).updateResourcesLegacy(application.language.value)
-                } else {
-                    LocaleHelper(context = this@MainActivity).updateResources(application.language.value)
-                }
+                LocaleHelper(context = this@MainActivity).updateResourcesLegacy(application.language.value)
             }
-
-                WalliesComposeTheme(
-                    appTheme = application.theme.value
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.background,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        WalliesApp(
-                            networkMonitor = networkMonitor,
-                            googleAuthUiClient = googleAuthUiClient
-                        )
-                    }
-            }
+            InitUiWithTheme(application.theme.value, networkMonitor, googleAuthUiClient)
         }
     }
 }
+
+@Composable
+fun InitUiWithTheme(
+    theme: String, networkMonitor: NetworkMonitor, googleAuthUiClient: GoogleAuthUiClient
+) {
+    var currentTheme by remember(theme) { mutableStateOf(theme) }
+    LaunchedEffect(theme) {
+        currentTheme = theme
+    }
+
+    WalliesComposeTheme(
+        appTheme = currentTheme
+    ) {
+        WalliesApp(
+            networkMonitor = networkMonitor, googleAuthUiClient = googleAuthUiClient
+        )
+    }
+}
+
+

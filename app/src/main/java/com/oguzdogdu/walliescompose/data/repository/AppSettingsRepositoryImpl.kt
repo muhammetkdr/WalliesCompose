@@ -10,10 +10,12 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.HOME_IMAGE_ROTATE_KEY
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.LANGUAGE_KEY
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.ONBOARDING
+import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.SHORTCUT_THEME
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.THEME_KEY
 import com.oguzdogdu.walliescompose.domain.repository.AppSettingsRepository
-import com.oguzdogdu.walliescompose.util.ThemeKeys
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -33,6 +35,10 @@ private val Context.onboardingVisibility: DataStore<Preferences> by preferencesD
     name = ONBOARDING
 )
 
+private val Context.shortcutTheme: DataStore<Preferences> by preferencesDataStore(
+    name = SHORTCUT_THEME
+)
+
 class AppSettingsRepositoryImpl @Inject constructor(
     private val context: Context,
 ) : AppSettingsRepository {
@@ -46,8 +52,9 @@ class AppSettingsRepositoryImpl @Inject constructor(
     override suspend fun getThemeStrings(key: String): Flow<String?> {
         return flow {
             val preferencesKey = stringPreferencesKey(key)
-            val preference = context.themeDataStore.data.first()
-            emit(preference[preferencesKey])
+            context.themeDataStore.data.collect {
+                emit(it[preferencesKey])
+            }
         }
     }
 
@@ -97,10 +104,27 @@ class AppSettingsRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun putShorcutThemes(key: String, value: Boolean) {
+        val preferencesKey = booleanPreferencesKey(key)
+        context.shortcutTheme.edit {
+            it[preferencesKey] = value
+        }
+    }
+
+    override fun getShortcutThemes(key: String): Flow<Boolean> {
+        return flow {
+            val preferencesKey = booleanPreferencesKey(key)
+           context.shortcutTheme.data.collect { data ->
+               data[preferencesKey]?.let { emit(it) }
+            }
+        }
+    }
+
     companion object {
          const val THEME_KEY = "THEME_KEY"
          const val LANGUAGE_KEY = "LANGUAGE_KEY"
          const val HOME_IMAGE_ROTATE_KEY = "HOME_IMAGE_ROTATE_KEY"
          const val ONBOARDING = "ONBOARDING"
+         const val SHORTCUT_THEME = "SHORTCUT_THEME"
     }
 }

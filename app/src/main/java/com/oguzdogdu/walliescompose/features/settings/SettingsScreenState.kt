@@ -6,4 +6,5 @@ data class SettingsScreenState(
     val showSnackBar: Boolean? = null,
     val getThemeValue: String? = null,
     val getLanguageValue: String? = null,
+    val shortcutSwitch: Boolean = false
 )

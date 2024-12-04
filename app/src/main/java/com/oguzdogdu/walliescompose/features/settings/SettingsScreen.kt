@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,8 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.settings.components.RowOfSettingOptions
 import com.oguzdogdu.walliescompose.features.settings.components.SingleSelectDialog
@@ -47,6 +45,10 @@ fun SettingsScreenRoute(
 ) {
     val context = LocalContext.current
     val snackState = remember { SnackbarHostState() }
+
+    LaunchedEffect(true) {
+        onSettingsScreenEvent(SettingsScreenEvent.FetchShortcutTheme)
+    }
 
     LaunchedEffect(key1 = state.showSnackBar) {
         when(state.showSnackBar) {
@@ -158,6 +160,7 @@ fun SettingsScreen(
     }
 
     ListOfSettingsMenu(
+        shortcutSwitch = settingsScreenState.shortcutSwitch,
         context = context,
         onSettingsScreenEvent = onSettingsScreenEvent
     )
@@ -165,6 +168,7 @@ fun SettingsScreen(
 
 @Composable
 fun ListOfSettingsMenu(
+    shortcutSwitch: Boolean,
     context: Context,
     onSettingsScreenEvent: onSettingsScreenEvent,
 ) {
@@ -177,7 +181,7 @@ fun ListOfSettingsMenu(
                 when (listItem) {
                     is ListItem.Content -> {
                         RowOfSettingOptions(onClickToItem = { click ->
-                            when (click.description) {
+                            when (click.title) {
                                 R.string.theme_text -> {
                                     onSettingsScreenEvent(
                                         SettingsScreenEvent.OpenThemeDialog(
@@ -202,7 +206,12 @@ fun ListOfSettingsMenu(
                                 }
 
                             }
-                        }, listItem = listItem)
+                        }, listItem = listItem, customIcon = {
+                            Switch(checked = shortcutSwitch, onCheckedChange = {
+                                onSettingsScreenEvent(SettingsScreenEvent.SwitchChecked(it))
+                            }
+                            )
+                        })
                     }
 
                     is ListItem.Header -> Text(

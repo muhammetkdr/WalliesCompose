@@ -81,7 +81,7 @@ fun WalliesApp(
     }
     SharedTransitionLayout {
         Scaffold(
-            modifier = Modifier.fillMaxSize().skipToLookaheadSize(),
+            modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 WalliesBottomAppBar(
                     navController = navController,
