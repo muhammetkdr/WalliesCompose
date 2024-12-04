@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oguzdogdu.walliescompose.WalliesApplication
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.LANGUAGE_KEY
+import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.SHORTCUT_THEME
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.THEME_KEY
 import com.oguzdogdu.walliescompose.domain.repository.AppSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +34,8 @@ class SettingsViewModel @Inject constructor(
             is SettingsScreenEvent.SetNewLanguage -> setLanguageValue(event.value)
             is SettingsScreenEvent.OpenLanguageDialog -> openLanguage(event.open)
             is SettingsScreenEvent.ClearCached -> statusClearCache(event.isCleared)
+            is SettingsScreenEvent.SwitchChecked -> shortcutThemeVisibility(event.value)
+            SettingsScreenEvent.FetchShortcutTheme -> getShortcutTheme()
         }
     }
 
@@ -40,6 +43,22 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _settingsState.update {
                 it.copy(showSnackBar = showSnackBar)
+            }
+        }
+    }
+
+    private fun shortcutThemeVisibility(value: Boolean) {
+        viewModelScope.launch {
+            dataStore.putShorcutThemes(key = SHORTCUT_THEME, value = value)
+        }
+    }
+
+    private fun getShortcutTheme() {
+        viewModelScope.launch {
+            dataStore.getShortcutThemes(key = SHORTCUT_THEME).collect { value ->
+                _settingsState.update {
+                    it.copy(shortcutSwitch = value)
+                }
             }
         }
     }
@@ -63,11 +82,11 @@ class SettingsViewModel @Inject constructor(
     private fun getThemeValue() {
         viewModelScope.launch {
             dataStore.getThemeStrings(key = THEME_KEY).collect { value ->
-                _settingsState.updateAndGet {
-                    it.copy(getThemeValue = value)
-                }
                 if (value != null) {
                     application.theme.value = value
+                }
+                _settingsState.updateAndGet {
+                    it.copy(getThemeValue = value)
                 }
             }
         }

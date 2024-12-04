@@ -35,9 +35,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +55,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleStartStopEffectScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -61,9 +65,11 @@ import com.oguzdogdu.walliescompose.data.common.ImageLoadingState
 import com.oguzdogdu.walliescompose.domain.model.popular.PopularImage
 import com.oguzdogdu.walliescompose.domain.model.topics.Topics
 import com.oguzdogdu.walliescompose.features.home.components.AnimatedImageRotationCard
+import com.oguzdogdu.walliescompose.features.home.components.DayNightSwitch
 import com.oguzdogdu.walliescompose.features.home.components.HomeRandomPage
 import com.oguzdogdu.walliescompose.features.home.event.HomeScreenEvent
 import com.oguzdogdu.walliescompose.features.home.state.HomeUIState
+import com.oguzdogdu.walliescompose.features.settings.ThemeValues
 import com.oguzdogdu.walliescompose.navigation.utils.WalliesIcons
 import com.oguzdogdu.walliescompose.ui.theme.medium
 import kotlinx.coroutines.coroutineScope
@@ -90,6 +96,14 @@ fun SharedTransitionScope.HomeScreenRoute(
     var visibleChars by remember { mutableIntStateOf(0) }
     var animatedImageRotateCardVisibility by remember {
         mutableStateOf(false)
+    }
+    var themeCheck by remember {
+        mutableStateOf(false)
+    }
+    val shortcutTheme by viewModel.shortcutTheme.collectAsStateWithLifecycle()
+
+    LaunchedEffect (homeUiState.appTheme){
+        themeCheck = homeUiState.appTheme == ThemeValues.DARK_MODE.title
     }
 
     LaunchedEffect(Unit) {
@@ -163,6 +177,17 @@ fun SharedTransitionScope.HomeScreenRoute(
                         textAlign = TextAlign.Center,
                     )
                 }
+            }
+            if (shortcutTheme) {
+                DayNightSwitch(isNightMode = themeCheck) {
+                    themeCheck = it
+                    if(it) {
+                        viewModel.setTheme(ThemeValues.DARK_MODE.title)
+                    } else {
+                        viewModel.setTheme(ThemeValues.LIGHT_MODE.title)
+                    }
+                }
+
             }
 
             IconButton(

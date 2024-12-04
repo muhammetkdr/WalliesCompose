@@ -11,4 +11,7 @@ interface AppSettingsRepository {
     fun getHomeRotateCardVisibility(key: String): Flow<Boolean>
     suspend fun putOnboardingShow(key: String, value: Boolean)
     fun getOnboardingShow(key: String): Flow<Boolean>
+    suspend fun putShorcutThemes(key: String, value: Boolean)
+    fun getShortcutThemes(key: String): Flow<Boolean>
+
 }

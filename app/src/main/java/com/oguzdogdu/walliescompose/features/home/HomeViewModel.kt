@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.oguzdogdu.walliescompose.WalliesApplication
 import com.oguzdogdu.walliescompose.data.common.takeListOr
 import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.HOME_IMAGE_ROTATE_KEY
+import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.SHORTCUT_THEME
+import com.oguzdogdu.walliescompose.data.repository.AppSettingsRepositoryImpl.Companion.THEME_KEY
 import com.oguzdogdu.walliescompose.domain.model.popular.PopularImage
 import com.oguzdogdu.walliescompose.domain.model.random.RandomImage
 import com.oguzdogdu.walliescompose.domain.model.topics.Topics
@@ -26,7 +28,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,6 +40,12 @@ class HomeViewModel @Inject constructor(
     private val application: WalliesApplication,
     private val appSettingsRepository: AppSettingsRepository
 ) : ViewModel() {
+
+    val shortcutTheme: StateFlow<Boolean> =
+        appSettingsRepository.getShortcutThemes(SHORTCUT_THEME).stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly, false
+        )
 
     private val _homeListState = MutableStateFlow<HomeUIState>(HomeUIState())
     val homeListState = _homeListState.asStateFlow()
@@ -57,7 +64,10 @@ class HomeViewModel @Inject constructor(
     fun handleScreenEvents(event: HomeScreenEvent) {
         when (event) {
             HomeScreenEvent.FetchHomeScreenLists -> fetchHomeScreenData()
-            HomeScreenEvent.FetchMainScreenUserData -> checkUserAuthState()
+            HomeScreenEvent.FetchMainScreenUserData -> {
+                checkUserAuthState()
+                fetchTheme()
+            }
         }
     }
 
@@ -68,6 +78,22 @@ class HomeViewModel @Inject constructor(
                 repository.getHomeTopicsImages(),
                 repository.getHomeImagesByPopulars(),
             )
+        }
+    }
+
+    fun setTheme(value: String) {
+        viewModelScope.launch {
+            appSettingsRepository.putThemeStrings(key = THEME_KEY, value = value)
+            application.theme.value = value
+        }
+    }
+    private fun fetchTheme() {
+        viewModelScope.launch {
+            appSettingsRepository.getThemeStrings(key = THEME_KEY).collectLatest { theme ->
+                _homeListState.update {
+                    it.copy(appTheme = theme)
+                }
+            }
         }
     }
 
