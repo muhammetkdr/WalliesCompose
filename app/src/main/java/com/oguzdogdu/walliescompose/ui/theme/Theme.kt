@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -72,106 +73,90 @@ val DarkColorPalette = darkColorScheme(
 
 @Composable
 fun WalliesComposeTheme(
-    appTheme: String?,
+    appTheme: ThemeValues,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val targetColorScheme = when (appTheme) {
-        ThemeValues.SYSTEM_DEFAULT.title -> if (darkTheme) DarkColorPalette else LightColorPalette
-        ThemeValues.LIGHT_MODE.title -> LightColorPalette
-        ThemeValues.DARK_MODE.title -> DarkColorPalette
-        null -> if (darkTheme) DarkColorPalette else LightColorPalette
-        else -> if (darkTheme) DarkColorPalette else LightColorPalette
-    }
-
-    var isFirstLaunch by remember { mutableStateOf(true) }
-
-    val animatedColorScheme = if (isFirstLaunch) {
-        isFirstLaunch = false
-        targetColorScheme
-    } else {
-        targetColorScheme.animate()
+        ThemeValues.SYSTEM_DEFAULT -> if (darkTheme) DarkColorPalette else LightColorPalette
+        ThemeValues.LIGHT_MODE -> LightColorPalette
+        ThemeValues.DARK_MODE -> DarkColorPalette
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = animatedColorScheme.primary.toArgb()
+            window.statusBarColor = targetColorScheme.primary.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }
 
     MaterialTheme(
-        colorScheme = animatedColorScheme,
+        colorScheme = rememberAnimatedColorScheme(targetColorScheme),
         typography = Typography,
         content = content
     )
 }
 
 @Composable
-fun ColorScheme.animate(
-    animationDuration: Int = 1000
-): ColorScheme {
-    val primary by animateColorAsState(primary, tween(animationDuration, easing = LinearEasing))
-    val onPrimary by animateColorAsState(onPrimary, tween(animationDuration, easing = LinearEasing))
-    val primaryContainer by animateColorAsState(primaryContainer, tween(animationDuration, easing = LinearEasing))
-    val onPrimaryContainer by animateColorAsState(onPrimaryContainer, tween(animationDuration, easing = LinearEasing))
-    val inversePrimary by animateColorAsState(inversePrimary, tween(animationDuration, easing = LinearEasing))
-    val secondary by animateColorAsState(secondary, tween(animationDuration, easing = LinearEasing))
-    val onSecondary by animateColorAsState(onSecondary, tween(animationDuration, easing = LinearEasing))
-    val secondaryContainer by animateColorAsState(secondaryContainer, tween(animationDuration, easing = LinearEasing))
-    val onSecondaryContainer by animateColorAsState(onSecondaryContainer, tween(animationDuration, easing = LinearEasing))
-    val tertiary by animateColorAsState(tertiary, tween(animationDuration, easing = LinearEasing))
-    val onTertiary by animateColorAsState(onTertiary, tween(animationDuration, easing = LinearEasing))
-    val tertiaryContainer by animateColorAsState(tertiaryContainer, tween(animationDuration, easing = LinearEasing))
-    val onTertiaryContainer by animateColorAsState(onTertiaryContainer, tween(animationDuration, easing = LinearEasing))
-    val background by animateColorAsState(background, tween(animationDuration, easing = LinearEasing))
-    val onBackground by animateColorAsState(onBackground, tween(animationDuration, easing = LinearEasing))
-    val surface by animateColorAsState(surface, tween(animationDuration, easing = LinearEasing))
-    val onSurface by animateColorAsState(onSurface, tween(animationDuration, easing = LinearEasing))
-    val surfaceVariant by animateColorAsState(surfaceVariant, tween(animationDuration, easing = LinearEasing))
-    val onSurfaceVariant by animateColorAsState(onSurfaceVariant, tween(animationDuration, easing = LinearEasing))
-    val surfaceTint by animateColorAsState(surfaceTint, tween(animationDuration, easing = LinearEasing))
-    val inverseSurface by animateColorAsState(inverseSurface, tween(animationDuration, easing = LinearEasing))
-    val inverseOnSurface by animateColorAsState(inverseOnSurface, tween(animationDuration, easing = LinearEasing))
-    val error by animateColorAsState(error, tween(animationDuration, easing = LinearEasing))
-    val onError by animateColorAsState(onError, tween(animationDuration, easing = LinearEasing))
-    val errorContainer by animateColorAsState(errorContainer, tween(animationDuration, easing = LinearEasing))
-    val onErrorContainer by animateColorAsState(onErrorContainer, tween(animationDuration, easing = LinearEasing))
-    val outline by animateColorAsState(outline, tween(animationDuration, easing = LinearEasing))
-    val outlineVariant by animateColorAsState(outlineVariant, tween(animationDuration, easing = LinearEasing))
-    val scrim by animateColorAsState(scrim, tween(animationDuration, easing = LinearEasing))
+fun rememberAnimatedColorScheme(currentColorScheme: ColorScheme): ColorScheme {
+    var isFirstLaunch by remember { mutableStateOf(true) }
+    val animatedSchema: @Composable ColorScheme.() -> ColorScheme = {
+        if (isFirstLaunch) {
+            isFirstLaunch = false
+        }
+        animate()
+    }
+    return currentColorScheme.animatedSchema()
+}
 
+@Composable
+private fun animateColor(targetValue: Color, durationMillis: Int = 1000): Color {
+    return animateColorAsState(
+        targetValue = targetValue,
+        animationSpec = tween(durationMillis = durationMillis, easing = LinearEasing), label = ""
+    ).value
+}
+
+@Composable
+fun ColorScheme.animate(animationDuration: Int = 1000): ColorScheme {
     return ColorScheme(
-        primary = primary,
-        onPrimary = onPrimary,
-        primaryContainer = primaryContainer,
-        onPrimaryContainer = onPrimaryContainer,
-        inversePrimary = inversePrimary,
-        secondary = secondary,
-        onSecondary = onSecondary,
-        secondaryContainer = secondaryContainer,
-        onSecondaryContainer = onSecondaryContainer,
-        tertiary = tertiary,
-        onTertiary = onTertiary,
-        tertiaryContainer = tertiaryContainer,
-        onTertiaryContainer = onTertiaryContainer,
-        background = background,
-        onBackground = onBackground,
-        surface = surface,
-        onSurface = onSurface,
-        surfaceVariant = surfaceVariant,
-        onSurfaceVariant = onSurfaceVariant,
-        surfaceTint = surfaceTint,
-        inverseSurface = inverseSurface,
-        inverseOnSurface = inverseOnSurface,
-        error = error,
-        onError = onError,
-        errorContainer = errorContainer,
-        onErrorContainer = onErrorContainer,
-        outline = outline,
-        outlineVariant = outlineVariant,
-        scrim = scrim
+        primary = animateColor(primary, animationDuration),
+        onPrimary = animateColor(onPrimary, animationDuration),
+        primaryContainer = animateColor(primaryContainer, animationDuration),
+        onPrimaryContainer = animateColor(onPrimaryContainer, animationDuration),
+        inversePrimary = animateColor(inversePrimary, animationDuration),
+        secondary = animateColor(secondary, animationDuration),
+        onSecondary = animateColor(onSecondary, animationDuration),
+        secondaryContainer = animateColor(secondaryContainer, animationDuration),
+        onSecondaryContainer = animateColor(onSecondaryContainer, animationDuration),
+        tertiary = animateColor(tertiary, animationDuration),
+        onTertiary = animateColor(onTertiary, animationDuration),
+        tertiaryContainer = animateColor(tertiaryContainer, animationDuration),
+        onTertiaryContainer = animateColor(onTertiaryContainer, animationDuration),
+        background = animateColor(background, animationDuration),
+        onBackground = animateColor(onBackground, animationDuration),
+        surface = animateColor(surface, animationDuration),
+        onSurface = animateColor(onSurface, animationDuration),
+        surfaceVariant = animateColor(surfaceVariant, animationDuration),
+        onSurfaceVariant = animateColor(onSurfaceVariant, animationDuration),
+        surfaceTint = animateColor(surfaceTint, animationDuration),
+        inverseSurface = animateColor(inverseSurface, animationDuration),
+        inverseOnSurface = animateColor(inverseOnSurface, animationDuration),
+        error = animateColor(error, animationDuration),
+        onError = animateColor(onError, animationDuration),
+        errorContainer = animateColor(errorContainer, animationDuration),
+        onErrorContainer = animateColor(onErrorContainer, animationDuration),
+        outline = animateColor(outline, animationDuration),
+        outlineVariant = animateColor(outlineVariant, animationDuration),
+        scrim = animateColor(scrim, animationDuration),
+        surfaceBright = animateColor(surfaceBright, animationDuration),
+        surfaceDim = animateColor(surfaceDim, animationDuration),
+        surfaceContainer = animateColor(surfaceContainer, animationDuration),
+        surfaceContainerHigh = animateColor(surfaceContainerHigh, animationDuration),
+        surfaceContainerHighest = animateColor(surfaceContainerHighest, animationDuration),
+        surfaceContainerLow = animateColor(surfaceContainerLow, animationDuration),
+        surfaceContainerLowest = animateColor(surfaceContainerLowest, animationDuration),
     )
 }
