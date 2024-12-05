@@ -16,6 +16,7 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.oguzdogdu.walliescompose.WalliesApplication
 import com.oguzdogdu.walliescompose.features.appstate.WalliesApp
 import com.oguzdogdu.walliescompose.features.login.googlesignin.GoogleAuthUiClient
+import com.oguzdogdu.walliescompose.features.settings.ThemeValues
 import com.oguzdogdu.walliescompose.ui.theme.WalliesComposeTheme
 import com.oguzdogdu.walliescompose.util.LocaleHelper
 import com.oguzdogdu.walliescompose.util.NetworkMonitor
@@ -63,9 +64,13 @@ class MainActivity : ComponentActivity() {
 fun InitUiWithTheme(
     theme: String, networkMonitor: NetworkMonitor, googleAuthUiClient: GoogleAuthUiClient
 ) {
-    var currentTheme by remember(theme) { mutableStateOf(theme) }
+    var currentTheme by remember(ThemeValues.entries) { mutableStateOf(ThemeValues.SYSTEM_DEFAULT) }
     LaunchedEffect(theme) {
-        currentTheme = theme
+        when (theme) {
+            ThemeValues.LIGHT_MODE.title -> currentTheme = ThemeValues.LIGHT_MODE
+            ThemeValues.DARK_MODE.title -> currentTheme = ThemeValues.DARK_MODE
+            ThemeValues.SYSTEM_DEFAULT.title -> currentTheme = ThemeValues.SYSTEM_DEFAULT
+        }
     }
 
     WalliesComposeTheme(
