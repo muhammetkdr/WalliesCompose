@@ -2,6 +2,7 @@ package com.oguzdogdu.walliescompose.features.setwallpaper
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -66,6 +68,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oguzdogdu.walliescompose.R
 import com.oguzdogdu.walliescompose.features.detail.TypeOfSetWallpaper
+import com.oguzdogdu.walliescompose.ui.theme.BackgroundLight
+import com.oguzdogdu.walliescompose.ui.theme.RowColorDark
 import com.oguzdogdu.walliescompose.ui.theme.medium
 import com.oguzdogdu.walliescompose.ui.theme.regular
 import kotlinx.coroutines.launch
@@ -295,36 +299,68 @@ fun BottomSheetContent(
                 translationY = anim
             },
             horizontalAlignment = Alignment.CenterHorizontally) {
+            val inactiveColor = if (isLightTheme()) {
+                RowColorDark.copy(alpha = 0.3f)
+            } else {
+                RowColorDark.copy(alpha = 0.5f)
+            }
+
+            val animatedBrightnessColorTrack by animateColorAsState(
+                targetValue = lerp(
+                    start = inactiveColor,
+                    stop = if (isLightTheme()) {
+                        Color(0xFFF5F5F5)
+                    } else {
+                        Color.White
+                    },
+                    fraction = brightness / 100f
+                ), label = ""
+            )
+            val animatedContrastColorTrack by animateColorAsState(
+                targetValue = lerp(
+                    start = inactiveColor,
+                    stop = if (isLightTheme()) {
+                        Color(0xFFF5F5F5)
+                    } else {
+                        Color.White
+                    },
+                    fraction = (contrast - 0.7f) / (2f - 0f)
+                ), label = ""
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+
                 Icon(
-                    painterResource(id = R.drawable.round_brightness_6_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    painter = painterResource(id = R.drawable.round_brightness_6_24),
+                    contentDescription = null,
+                    tint = animatedBrightnessColorTrack,
                     modifier = Modifier.size(24.dp)
                 )
 
                 Spacer(modifier = Modifier.size(8.dp))
 
                 Slider(
-                    interactionSource = brightnessInteractionSource,
-                    colors = SliderDefaults.colors(
-                        inactiveTrackColor = MaterialTheme.colorScheme.tertiary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        thumbColor = MaterialTheme.colorScheme.inversePrimary),
-                    thumb = {
-                        SliderDefaults.Thumb(
-                            interactionSource = brightnessInteractionSource,
-                            thumbSize = DpSize(4.dp,24.dp)
-                        )
-                    },
                     value = brightness,
                     onValueChange = { brightness = it },
                     valueRange = 0f..100f,
+                    interactionSource = brightnessInteractionSource,
+                    colors = SliderDefaults.colors(
+                        inactiveTrackColor = inactiveColor,
+                        activeTrackColor = animatedBrightnessColorTrack,
+                        thumbColor = MaterialTheme.colorScheme.background
+                    ),
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = brightnessInteractionSource,
+                            thumbSize = DpSize(4.dp, 24.dp),
+                            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.onBackground)
+                        )
+                    }
                 )
             }
+
             Spacer(modifier = Modifier.size(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -333,7 +369,7 @@ fun BottomSheetContent(
                 Icon(
                     painterResource(id = R.drawable.round_contrast_24),
                     contentDescription = "",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = animatedContrastColorTrack,
                     modifier = Modifier.size(24.dp)
                 )
 
@@ -342,13 +378,14 @@ fun BottomSheetContent(
                 Slider(
                     interactionSource = contrastInteractionSource,
                     colors = SliderDefaults.colors(
-                        inactiveTrackColor = MaterialTheme.colorScheme.tertiary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        thumbColor = MaterialTheme.colorScheme.inversePrimary),
+                        inactiveTrackColor = inactiveColor,
+                        activeTrackColor = animatedContrastColorTrack,
+                        thumbColor = MaterialTheme.colorScheme.background),
                     thumb = {
                         SliderDefaults.Thumb(
                             interactionSource = contrastInteractionSource,
-                            thumbSize = DpSize(4.dp,24.dp)
+                            thumbSize = DpSize(4.dp,24.dp),
+                            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.onBackground)
                         )
                     },
                     value = contrast,
@@ -361,25 +398,34 @@ fun BottomSheetContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val animatedColor by animateColorAsState(
+                    targetValue = lerp(
+                        start = Color(0xFFFFEB3B),
+                        stop = Color(0xFFB71C1C),
+                        fraction = saturation / 2f
+                    )
+                )
                 Icon(
-                    painterResource(id = R.drawable.round_invert_colors_24),
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    painter = painterResource(id = R.drawable.round_invert_colors_24),
+                    contentDescription = null,
+                    tint = animatedColor,
                     modifier = Modifier.size(24.dp)
                 )
 
-                Spacer(modifier = modifier.size(8.dp))
+                Spacer(modifier = Modifier.size(8.dp))
 
                 Slider(
                     interactionSource = saturationInteractionSource,
                     colors = SliderDefaults.colors(
                         inactiveTrackColor = MaterialTheme.colorScheme.tertiary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        thumbColor = MaterialTheme.colorScheme.inversePrimary),
+                        activeTrackColor = animatedColor,
+                        thumbColor = animatedColor
+                    ),
                     thumb = {
                         SliderDefaults.Thumb(
                             interactionSource = saturationInteractionSource,
-                            thumbSize = DpSize(4.dp,24.dp)
+                            thumbSize = DpSize(4.dp,24.dp),
+                            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.onBackground)
                         )
                     },
                     value = saturation,
@@ -485,4 +531,10 @@ fun BottomSheetContent(
             }
         }
     }
+}
+
+@Composable
+fun isLightTheme(): Boolean {
+    // Renk şemalarına göre tema kontrolü
+    return MaterialTheme.colorScheme.background == BackgroundLight
 }
